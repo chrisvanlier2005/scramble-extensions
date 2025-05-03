@@ -1,0 +1,33 @@
+{
+    "name": "lier/scramble-extensions",
+    "type": "library",
+    "version": "0.0.1",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "Lier\\ScrambleExtensions\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Chris van Lier",
+            "email": "93382176+chrisvanlier2005@users.noreply.github.com"
+        }
+    ],
+    "require": {
+        "dedoc/scramble": "dev-main",
+        "brick/money": ">=0.10.0",
+        "brick/math": ">=0.12",
+        "propaganistas/laravel-phone": ">5.0"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../scramble",
+            "options": {
+                "symlink": true
+            }
+        }
+    ]
+}
