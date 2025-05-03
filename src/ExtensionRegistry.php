@@ -8,7 +8,7 @@ use Lier\ScrambleExtensions\Appendable\AppendMethodCallExtension;
 use Lier\ScrambleExtensions\Appendable\AppendsEachMethodCallExtension;
 use Lier\ScrambleExtensions\Appendable\InferAppendableAnonymousResourceCollection;
 use Lier\ScrambleExtensions\Appendable\InferAppendJsonResource;
-use Lier\ScrambleExtensions\Pagination\LengthAwarePaginatorResourceCollectionSchema;
+use Lier\ScrambleExtensions\Pagination\LengthAwarePaginatorSchemaExtension;
 use Lier\ScrambleExtensions\Pagination\PaginatedOperationExtension;
 use Lier\ScrambleExtensions\Schema\Brick\BigDecimalToSchemaExtension;
 use Lier\ScrambleExtensions\Schema\Brick\CurrencyToSchemaExtension;
@@ -53,7 +53,7 @@ class ExtensionRegistry
     ];
 
     public const array PAGINATION = [
-        LengthAwarePaginatorResourceCollectionSchema::class,
+        LengthAwarePaginatorSchemaExtension::class,
         PaginatedOperationExtension::class,
     ];
 }

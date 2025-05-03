@@ -23,7 +23,7 @@ use Lier\ScrambleExtensions\Support\OpenApiObjectHelper;
 /**
  * @todo Update
  */
-class LengthAwarePaginatorResourceCollectionSchema extends TypeToSchemaExtension
+class LengthAwarePaginatorSchemaExtension extends TypeToSchemaExtension
 {
     /**
      * Create a new extension instance.
