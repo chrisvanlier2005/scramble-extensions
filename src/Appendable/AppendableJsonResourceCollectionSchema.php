@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support\Scramble\Extensions\Schema;
+namespace Lier\ScrambleExtensions\Appendable;
 
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Response;

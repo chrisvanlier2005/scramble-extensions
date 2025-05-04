@@ -21,7 +21,8 @@
         "brick/math": ">=0.12",
         "propaganistas/laravel-phone": ">5.0",
         "laravel/framework": ">=11",
-        "cebe/php-openapi": "^1.7"
+        "cebe/php-openapi": "^1.7",
+        "php": "8.4.*"
     },
     "repositories": [
         {

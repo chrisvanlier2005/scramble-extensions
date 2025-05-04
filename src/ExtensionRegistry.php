@@ -2,7 +2,7 @@
 
 namespace Lier\ScrambleExtensions;
 
-use App\Support\Scramble\Extensions\Schema\AppendableJsonResourceCollectionSchema;
+use Lier\ScrambleExtensions\Appendable\AppendableJsonResourceCollectionSchema;
 use Lier\ScrambleExtensions\Appendable\AppendableJsonResourceToSchema;
 use Lier\ScrambleExtensions\Appendable\AppendMethodCallExtension;
 use Lier\ScrambleExtensions\Appendable\AppendsEachMethodCallExtension;
@@ -10,6 +10,7 @@ use Lier\ScrambleExtensions\Appendable\InferAppendableAnonymousResourceCollectio
 use Lier\ScrambleExtensions\Appendable\InferAppendJsonResource;
 use Lier\ScrambleExtensions\Pagination\LengthAwarePaginatorSchemaExtension;
 use Lier\ScrambleExtensions\Pagination\PaginatedOperationExtension;
+use Lier\ScrambleExtensions\Properties\PropertyTypesFromPhpDocExtension;
 use Lier\ScrambleExtensions\Schema\Brick\BigDecimalToSchemaExtension;
 use Lier\ScrambleExtensions\Schema\Brick\CurrencyToSchemaExtension;
 use Lier\ScrambleExtensions\Schema\Brick\MoneyToSchemaExtension;
@@ -52,8 +53,18 @@ class ExtensionRegistry
         InferAppendJsonResource::class,
     ];
 
+    /**
+     * @var list<class-string>
+     */
     public const array PAGINATION = [
         LengthAwarePaginatorSchemaExtension::class,
         PaginatedOperationExtension::class,
+    ];
+
+    /**
+     * @var list<class-string>
+     */
+    public const array PHPDOC_PROPERTIES = [
+        PropertyTypesFromPhpDocExtension::class,
     ];
 }
