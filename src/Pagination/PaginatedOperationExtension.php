@@ -5,10 +5,14 @@ namespace Lier\ScrambleExtensions\Pagination;
 use Dedoc\Scramble\Extensions\OperationExtension;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Operation;
+use Dedoc\Scramble\Support\Generator\Parameter;
 use Dedoc\Scramble\Support\Generator\Response;
+use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Dedoc\Scramble\Support\RouteInfo;
 use Dedoc\Scramble\Support\Type\Generic;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use ReflectionAttribute;
 
@@ -47,6 +51,8 @@ class PaginatedOperationExtension extends OperationExtension
             return;
         }
 
+        $this->addPaginationParameters($paginationAttribute->class, $operation);
+
         $paginator = new Generic(
             name: $paginationAttribute->class,
             templateTypes: [],
@@ -58,5 +64,24 @@ class PaginatedOperationExtension extends OperationExtension
             $type,
             $transformedPaginationClass,
         ]);
+    }
+
+    /**
+     * @param string $class
+     * @param \Dedoc\Scramble\Support\Generator\Operation $operation
+     * @return void
+     */
+    private function addPaginationParameters(string $class, Operation $operation): void
+    {
+        if (is_a($class, LengthAwarePaginator::class, true)) {
+            $pageSchema = new Schema();
+            $pageSchema->type = new StringType();
+
+            $operation->addParameters([
+                new Parameter('page', 'query')
+                    ->description('The current page number')
+                    ->setSchema($pageSchema)
+            ]);
+        }
     }
 }
