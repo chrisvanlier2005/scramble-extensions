@@ -12,6 +12,8 @@ use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
 use Lier\ScrambleExtensions\Support\OpenApiObjectHelper;
 use Webmozart\Assert\Assert;
@@ -39,7 +41,7 @@ class AppendableJsonResourceToSchema extends JsonResourceTypeToSchema
      */
     public function toSchema(Type $type): mixed
     {
-        $toAppend = Collection::make($type->templateTypes)
+        $appendableTypes = Collection::make($type->templateTypes)
             ->filter(fn (Type $type) => $type instanceof KeyedArrayType)
             ->flatMap(function (KeyedArrayType $keyedArrayType) {
                 return Collection::make($keyedArrayType->items)
@@ -54,15 +56,14 @@ class AppendableJsonResourceToSchema extends JsonResourceTypeToSchema
             ->filter(fn (mixed $templateType) => !$templateType instanceof KeyedArrayType)
             ->toArray();
 
-        if ($toAppend->isEmpty()) {
+        if ($appendableTypes->isEmpty()) {
             return $this->openApiTransformer->transform($newType);
         }
 
-        return (new AllOf())
-            ->setItems([
-                $this->openApiTransformer->transform($newType),
-                OpenApiObjectHelper::createObjectTypeFromArray($toAppend->toArray()),
-            ]);
+        return new AllOf()->setItems([
+            $this->openApiTransformer->transform($newType),
+            OpenApiObjectHelper::createObjectTypeFromArray($appendableTypes->toArray()),
+        ]);
     }
 
     /**

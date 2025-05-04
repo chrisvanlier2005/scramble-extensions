@@ -35,12 +35,14 @@ class AppendableJsonResourceCollectionSchema extends AnonymousResourceCollection
     }
 
     /**
+     * Convert the given type to an OpenAPI schema.
+     *
      * @param \Dedoc\Scramble\Support\Type\Generic $type
-     * @return mixed
+     * @return OpenApiArrayType
      */
-    public function toSchema(Type $type): mixed
+    public function toSchema(Type $type): OpenApiArrayType
     {
-        $valuesToAppend = Collection::make($type->templateTypes)
+        $typesToAppend = Collection::make($type->templateTypes)
             ->filter(fn (Type $type) => $type instanceof FunctionType)
             ->filter(fn (FunctionType $ft) => $ft->returnType instanceof KeyedArrayType)
             ->flatMap(function (FunctionType $ft) {
@@ -57,21 +59,16 @@ class AppendableJsonResourceCollectionSchema extends AnonymousResourceCollection
             $this->getCollectingResourceType($type),
         );
 
-        if ($valuesToAppend->isEmpty()) {
-            return (new OpenApiArrayType())->setItems($resourceOpenApiType);
+        if ($typesToAppend->isEmpty()) {
+            return new OpenApiArrayType()->setItems($resourceOpenApiType);
         }
 
-        $objectAppends = OpenApiObjectHelper::createObjectTypeFromArray(
-            $valuesToAppend->toArray(),
+        return new OpenApiArrayType()->setItems(
+            new AllOf()->setItems([
+                $resourceOpenApiType,
+                OpenApiObjectHelper::createObjectTypeFromArray($typesToAppend->toArray()),
+            ]),
         );
-
-        return (new OpenApiArrayType())
-            ->setItems(
-                (new AllOf())->setItems([
-                    $resourceOpenApiType,
-                    $objectAppends,
-                ]),
-            );
     }
 
     /**
@@ -83,8 +80,8 @@ class AppendableJsonResourceCollectionSchema extends AnonymousResourceCollection
      */
     private function getCollectingResourceType(Generic $type): mixed
     {
-        // In case of paginated resource, we still want to get to the underlying JsonResource.
-        return (new TypeWalker())->first(
+        // In the case of paginated resource, we still want to get to the underlying JsonResource.
+        return new TypeWalker()->first(
             $type->templateTypes[0],
             fn (Type $t) => $t->isInstanceOf(JsonResource::class),
         );
@@ -93,7 +90,6 @@ class AppendableJsonResourceCollectionSchema extends AnonymousResourceCollection
     /**
      * @param \Dedoc\Scramble\Support\Type\Generic $type
      * @return \Dedoc\Scramble\Support\Generator\Response|null
-     * @throws \ReflectionException
      * @todo refactor.
      */
     public function toResponse(Type $type): ?Response
@@ -131,7 +127,7 @@ class AppendableJsonResourceCollectionSchema extends AnonymousResourceCollection
                 $objectAppends,
             ]);
 
-        $openApiType = (new OpenApiArrayType())
+        $openApiType = new OpenApiArrayType()
             ->setItems($openApiType);
 
         $openApiType = OpenApiObjectHelper::createObjectTypeFromArray([
