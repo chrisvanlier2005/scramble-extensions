@@ -60,7 +60,7 @@ class PaginatedOperationExtension extends OperationExtension
 
         $transformedPaginationClass = $this->openApiTransformer->transform($paginator);
 
-        $content->type = (new AllOf())->setItems([
+        $content->type = new AllOf()->setItems([
             $type,
             $transformedPaginationClass,
         ]);

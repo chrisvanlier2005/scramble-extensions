@@ -6,6 +6,7 @@ use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\Types\ArrayType as OpenApiArrayType;
+use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -95,6 +96,7 @@ class AppendableJsonResourceCollectionSchema extends AnonymousResourceCollection
     public function toResponse(Type $type): ?Response
     {
         $appendEach = $type->templateTypes[1] ?? null;
+        $additional = $type->templateTypes[2 /* TAdditional */] ?? new UnknownType;
 
         if (!$appendEach instanceof FunctionType || !$appendEach->returnType instanceof KeyedArrayType) {
             return null;
@@ -134,6 +136,10 @@ class AppendableJsonResourceCollectionSchema extends AnonymousResourceCollection
             'data' => $openApiType,
         ], ['data']);
 
+        if ($additional instanceof KeyedArrayType) {
+            $additional->items = $this->flattenMergeValues($additional->items);
+            $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($additional));;
+        }
 
         return Response::make(200)->setContent(
             'application/json',
