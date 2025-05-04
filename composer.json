@@ -19,7 +19,9 @@
         "dedoc/scramble": "dev-main",
         "brick/money": ">=0.10.0",
         "brick/math": ">=0.12",
-        "propaganistas/laravel-phone": ">5.0"
+        "propaganistas/laravel-phone": ">5.0",
+        "laravel/framework": ">=11",
+        "cebe/php-openapi": "^1.7"
     },
     "repositories": [
         {
@@ -29,5 +31,12 @@
                 "symlink": true
             }
         }
-    ]
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Lier\\ScrambleExtensions\\ScrambleExtensionsServiceProvider"
+            ]
+        }
+    }
 }
