@@ -12,8 +12,6 @@ use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
 use Lier\ScrambleExtensions\Support\OpenApiObjectHelper;
 use Webmozart\Assert\Assert;
@@ -88,7 +86,7 @@ class AppendableJsonResourceToSchema extends JsonResourceTypeToSchema
                 return $keyedArrayType->items;
             })
             ->mapWithKeys(fn(ArrayItemType_ $item) => [
-                (string)$item->key => $this->openApiTransformer->transform($item),
+                (string) $item->key => $this->openApiTransformer->transform($item),
             ]);
 
         if ($appends->isNotEmpty()) {
