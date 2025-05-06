@@ -18,7 +18,7 @@ use Lier\ScrambleExtensions\Support\OpenApiObjectHelper;
 use Webmozart\Assert\Assert;
 
 /**
- * @todo refactor.
+ * @todo refactor, and use reusable components.
  */
 class AppendableJsonResourceToSchema extends JsonResourceTypeToSchema
 {
@@ -45,6 +45,7 @@ class AppendableJsonResourceToSchema extends JsonResourceTypeToSchema
      */
     public function toSchema(Type $type): mixed
     {
+        // TODO: refactor this ;-;
         $appendableTypes = Collection::make($type->templateTypes)
             ->filter(fn (Type $type) => $type instanceof KeyedArrayType)
             ->flatMap(function (KeyedArrayType $keyedArrayType) {
@@ -76,6 +77,7 @@ class AppendableJsonResourceToSchema extends JsonResourceTypeToSchema
      */
     public function toResponse(Type $type): Response
     {
+        // TODO: refactor this ;-;
         Assert::isInstanceOf($type, Generic::class);
 
         $newType = clone $type;
