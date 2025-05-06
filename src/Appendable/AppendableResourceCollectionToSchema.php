@@ -31,6 +31,12 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
     use FlattensMergeValues;
     use MergesOpenApiObjects;
 
+    /**
+     * Determine whether the extension should handle the given type.
+     *
+     * @param \Dedoc\Scramble\Support\Type\Type $type
+     * @return bool
+     */
     public function shouldHandle(Type $type): bool
     {
         return $type instanceof ObjectType
@@ -38,6 +44,8 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
     }
 
     /**
+     * Convert the given type to an OpenAPI schema.
+     *
      * @param \Dedoc\Scramble\Support\Type\Type $type
      * @return \Dedoc\Scramble\Support\Generator\Types\ArrayType|\Dedoc\Scramble\Support\Generator\Types\UnknownType|null
      */
@@ -45,7 +53,7 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
     {
         $definition = $this->infer->analyzeClass($type->name);
 
-        $array = (new ResourceCollectionTypeInfer)->getBasicCollectionType($definition);
+        $collectionType = new ResourceCollectionTypeInfer()->getBasicCollectionType($definition);
 
         $typesToAppend = new Collection();
 
@@ -59,16 +67,8 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
 
                     return Collection::make($returnType->items)
                         ->flatMap(function (ArrayItemType_ $item) {
-                            if ($item->key === null && $item->value->isInstanceOf(MergeValue::class)) {
-                                Assert::isInstanceOf($item->value, Generic::class);
-
-                                $items = $item->value->templateTypes[1] ?? null;
-
-                                if (!$items instanceof KeyedArrayType) {
-                                    return [];
-                                }
-
-                                return $items->items;
+                            if ($item->isInstanceOf(MergeValue::class)) {
+                                return $this->unpackMergeKeyedArrayValue($item->value) ?? [];
                             }
 
                             return [$item];
@@ -79,12 +79,12 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
                 });
         }
 
-        if ($array instanceof \Dedoc\Scramble\Support\Type\UnknownType) {
+        if ($collectionType instanceof \Dedoc\Scramble\Support\Type\UnknownType) {
             return null;
         }
 
         $resourceOpenApiType = $this->openApiTransformer->transform(
-            $array->value,
+            $collectionType->value,
         );
 
         if ($typesToAppend->isEmpty()) {
@@ -100,20 +100,26 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
     }
 
     /**
+     * Convert the given type to an OpenAPI response.
+     *
      * @param \Dedoc\Scramble\Support\Type\Type $type
      * @return \Dedoc\Scramble\Support\Generator\Response|null
      */
-    public function toResponse(Type $type)
+    public function toResponse(Type $type): ?Response
     {
+        if (!$type instanceof Generic) {
+            return null; // Can be handled by a different extension.
+        }
+
         $appendEach = $type->templateTypes[1] ?? null;
-        $additional = $type->templateTypes[2 /* TAdditional */] ?? new UnknownType;
+        $additional = $type->templateTypes[2] ?? new UnknownType();
 
         if (!$appendEach instanceof FunctionType || !$appendEach->returnType instanceof KeyedArrayType) {
             return null;
         }
 
         $definition = $this->infer->analyzeClass($type->name);
-        $collecting = (new ResourceCollectionTypeInfer)->getBasicCollectionType($definition);
+        $collecting = new ResourceCollectionTypeInfer()->getBasicCollectionType($definition);
 
         if ($collecting instanceof \Dedoc\Scramble\Support\Type\UnknownType) {
             return null;
@@ -124,16 +130,8 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
         /** @var \Illuminate\Support\Collection<string, mixed> $mappedValuesToAppend */
         $mappedValuesToAppend = Collection::make($appendEach->returnType->items)
             ->flatMap(function (ArrayItemType_ $item) {
-                if ($item->key === null && $item->value->isInstanceOf(MergeValue::class)) {
-                    Assert::isInstanceOf($item->value, Generic::class);
-
-                    $items = $item->value->templateTypes[1] ?? null;
-
-                    if (!$items instanceof KeyedArrayType) {
-                        return [];
-                    }
-
-                    return $items->items;
+                if ($item->value->isInstanceOf(MergeValue::class)) {
+                    return $this->unpackMergeKeyedArrayValue($item->value) ?? [];
                 }
 
                 return [$item];
@@ -144,30 +142,26 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
                 ];
             });
 
+        $resource = $this->openApiTransformer->transform($collecting);
+
         if ($mappedValuesToAppend->isEmpty()) {
-            return null;
+            return $resource;
         }
 
         $objectAppends = OpenApiObjectHelper::createObjectTypeFromArray(
             $mappedValuesToAppend->toArray(),
         );
 
-        $jsonResourceOpenApiType = $this->openApiTransformer->transform($collecting);
-
-        $openApiType = (new AllOf())
-            ->setItems([
-                $jsonResourceOpenApiType,
-                $objectAppends,
-            ]);
-
-        $openApiType = new OpenApiArrayType()
-            ->setItems($openApiType);
-
-        $withArray = $definition->getMethodCallType('with');
+        $openApiType = new AllOf()->setItems([
+            $resource,
+            $objectAppends,
+        ]);
 
         $openApiType = OpenApiObjectHelper::createObjectTypeFromArray([
-            'data' => $openApiType,
-        ], ['data']);
+            'data' => new OpenApiArrayType()->setItems($openApiType),
+        ], required: ['data']);
+
+        $withArray = $definition->getMethodCallType('with');
 
         if ($withArray instanceof KeyedArrayType) {
             $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($withArray));
@@ -175,12 +169,32 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
 
         if ($additional instanceof KeyedArrayType) {
             $additional->items = $this->flattenMergeValues($additional->items);
-            $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($additional));;
+
+            $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($additional));
         }
 
         return Response::make(200)->setContent(
             'application/json',
             Schema::fromType($openApiType),
         );
+    }
+
+    /**
+     * @param \Dedoc\Scramble\Support\Type\Type $value
+     * @return list<\Dedoc\Scramble\Support\Type\ArrayItemType_>|null
+     */
+    private function unpackMergeKeyedArrayValue(Type $value): ?array
+    {
+        if (!$value instanceof Generic || !$value->isInstanceOf(MergeValue::class)) {
+            return null;
+        }
+
+        $items = $value->templateTypes[1] ?? null;
+
+        if (!$items instanceof KeyedArrayType) {
+            return null;
+        }
+
+        return $items->items;
     }
 }
