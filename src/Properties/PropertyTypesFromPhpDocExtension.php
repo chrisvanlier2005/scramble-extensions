@@ -36,7 +36,6 @@ class PropertyTypesFromPhpDocExtension implements PropertyTypeExtension
      */
     public function getPropertyType(PropertyFetchEvent $event): ?Type
     {
-
         $info = $this->getModelInfo($event->getInstance());
 
         if (!$info->attributes->has($event->getName())) {

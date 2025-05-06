@@ -38,6 +38,16 @@ trait InteractsWithTaggedTypes
 
     /**
      * @param \Dedoc\Scramble\Support\Type\Generic $type
+     * @return \Illuminate\Support\Collection
+     */
+    private function collectAppendTypes(Generic $type): Collection
+    {
+        // WIP
+        return new Collection();
+    }
+
+    /**
+     * @param \Dedoc\Scramble\Support\Type\Generic $type
      * @return \Lier\ScrambleExtensions\Support\Types\TaggedKeyedArrayType|null
      */
     private function collectAdditionalType(Generic $type): ?TaggedKeyedArrayType

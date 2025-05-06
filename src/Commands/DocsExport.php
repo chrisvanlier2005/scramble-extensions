@@ -53,7 +53,6 @@ final class DocsExport extends Command
         Writer::writeToYamlFile($spec, $path);
 
         $this->info("Exported specification to {$path}.");
-
         $this->info('Formatting...');
 
         $process = new Process(['npx', 'openapi-format', $path, '-o', $path]);

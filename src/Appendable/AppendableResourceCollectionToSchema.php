@@ -55,7 +55,6 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
     {
         $definition = $this->infer->analyzeClass($type->name);
 
-
         $collectionType = new ResourceCollectionTypeInfer()->getBasicCollectionType($definition);
 
         $typesToAppend = new Collection();
@@ -109,6 +108,7 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
         $collecting = new ResourceCollectionTypeInfer()->getBasicCollectionType($definition);
 
         if ($collecting instanceof \Dedoc\Scramble\Support\Type\UnknownType) {
+            // Unable to determine the collection type.
             return null;
         }
 
@@ -152,24 +152,5 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
             'application/json',
             Schema::fromType($openApiType),
         );
-    }
-
-    /**
-     * @param \Dedoc\Scramble\Support\Type\Type $value
-     * @return list<\Dedoc\Scramble\Support\Type\ArrayItemType_>|null
-     */
-    private function unpackMergeKeyedArrayValue(Type $value): ?array
-    {
-        if (!$value instanceof Generic || !$value->isInstanceOf(MergeValue::class)) {
-            return null;
-        }
-
-        $items = $value->templateTypes[1] ?? null;
-
-        if (!$items instanceof KeyedArrayType) {
-            return null;
-        }
-
-        return $items->items;
     }
 }
