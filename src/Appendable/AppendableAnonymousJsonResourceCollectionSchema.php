@@ -21,7 +21,7 @@ use Illuminate\Http\Resources\MissingValue;
 use Illuminate\Support\Collection;
 use Lier\ScrambleExtensions\Support\OpenApiObjectHelper;
 
-class AppendableJsonResourceCollectionSchema extends AnonymousResourceCollectionTypeToSchema
+class AppendableAnonymousJsonResourceCollectionSchema extends AnonymousResourceCollectionTypeToSchema
 {
     /**
      * Determine whether the extension should handle the given type.

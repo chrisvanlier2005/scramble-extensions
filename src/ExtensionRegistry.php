@@ -2,7 +2,7 @@
 
 namespace Lier\ScrambleExtensions;
 
-use Lier\ScrambleExtensions\Appendable\AppendableJsonResourceCollectionSchema;
+use Lier\ScrambleExtensions\Appendable\AppendableAnonymousJsonResourceCollectionSchema;
 use Lier\ScrambleExtensions\Appendable\AppendableJsonResourceToSchema;
 use Lier\ScrambleExtensions\Appendable\AppendableResourceCollectionToSchema;
 use Lier\ScrambleExtensions\Appendable\AppendMethodCallExtension;
@@ -47,7 +47,7 @@ class ExtensionRegistry
      * @var list<class-string>
      */
     public const array APPENDABLE_RESOURCES = [
-        AppendableJsonResourceCollectionSchema::class,
+        AppendableAnonymousJsonResourceCollectionSchema::class,
         AppendableJsonResourceToSchema::class,
         AppendMethodCallExtension::class,
         AppendsEachMethodCallExtension::class,
