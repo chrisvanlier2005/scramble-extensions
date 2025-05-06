@@ -54,15 +54,13 @@ final class DocsExport extends Command
 
         $this->info("Exported specification to {$path}.");
 
-        if ($this->ask('Do you want to format the document?', 'y') === 'y') {
-            $this->info('Formatting...');
+        $this->info('Formatting...');
 
-            $process = new Process(['npx', 'openapi-format', $path, '-o', $path]);
-            $process->setTimeout(60);
-            $process->run();
+        $process = new Process(['npx', 'openapi-format', $path, '-o', $path]);
+        $process->setTimeout(60);
+        $process->run();
 
-            $this->info("{$path} formatted.");
-        }
+        $this->info("{$path} formatted.");
 
         return 0;
     }

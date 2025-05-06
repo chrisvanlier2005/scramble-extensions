@@ -2,7 +2,6 @@
 
 namespace Lier\ScrambleExtensions\Appendable;
 
-use App\Http\Resources\AnonymousResourceCollection;
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -37,7 +36,7 @@ class AppendsEachMethodCallExtension implements MethodReturnTypeExtension
     {
         return match ($event->name) {
             'appendEach' => new Generic(
-                name: AppendableJsonResourceToSchema::$anonymousResourceCollectionName,
+                name: $event->getInstance()->name,
                 templateTypes: $event->getInstance()->templateTypes,
             ),
             'preserveQuery' => new Generic( // Otherwise it's `UnknownType`, causing an empty response.

@@ -4,6 +4,7 @@ namespace Lier\ScrambleExtensions;
 
 use Lier\ScrambleExtensions\Appendable\AppendableJsonResourceCollectionSchema;
 use Lier\ScrambleExtensions\Appendable\AppendableJsonResourceToSchema;
+use Lier\ScrambleExtensions\Appendable\AppendableResourceCollectionToSchema;
 use Lier\ScrambleExtensions\Appendable\AppendMethodCallExtension;
 use Lier\ScrambleExtensions\Appendable\AppendsEachMethodCallExtension;
 use Lier\ScrambleExtensions\Appendable\InferAppendableAnonymousResourceCollection;
@@ -51,6 +52,7 @@ class ExtensionRegistry
         AppendsEachMethodCallExtension::class,
         InferAppendableAnonymousResourceCollection::class,
         InferAppendJsonResource::class,
+        AppendableResourceCollectionToSchema::class
     ];
 
     /**

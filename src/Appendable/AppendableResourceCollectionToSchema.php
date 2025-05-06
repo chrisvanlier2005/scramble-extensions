@@ -11,6 +11,7 @@ use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\InferExtensions\ResourceCollectionTypeInfer;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\FunctionType;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -44,19 +45,22 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
 
         $array = (new ResourceCollectionTypeInfer)->getBasicCollectionType($definition);
 
-        $typesToAppend = Collection::make($type->templateTypes)
-            ->filter(fn (Type $type) => $type instanceof FunctionType)
-            ->filter(fn (FunctionType $ft) => $ft->returnType instanceof KeyedArrayType)
-            ->flatMap(function (FunctionType $ft) {
-                /** @var \Dedoc\Scramble\Support\Type\KeyedArrayType $returnType */
-                $returnType = $ft->returnType;
+        $typesToAppend = [];
 
-                return Collection::make($returnType->items)
-                    ->mapWithKeys(fn (ArrayItemType_ $item) => [
-                        (string) $item->key => $this->openApiTransformer->transform($item),
-                    ]);
-            });
+        if ($type instanceof Generic) {
+            $typesToAppend = Collection::make($type->templateTypes)
+                ->filter(fn (Type $type) => $type instanceof FunctionType)
+                ->filter(fn (FunctionType $ft) => $ft->returnType instanceof KeyedArrayType)
+                ->flatMap(function (FunctionType $ft) {
+                    /** @var \Dedoc\Scramble\Support\Type\KeyedArrayType $returnType */
+                    $returnType = $ft->returnType;
 
+                    return Collection::make($returnType->items)
+                        ->mapWithKeys(fn (ArrayItemType_ $item) => [
+                            (string) $item->key => $this->openApiTransformer->transform($item),
+                        ]);
+                });
+        }
 
         if ($array instanceof \Dedoc\Scramble\Support\Type\UnknownType) {
             return null;
