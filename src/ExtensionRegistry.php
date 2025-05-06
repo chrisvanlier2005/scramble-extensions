@@ -9,6 +9,7 @@ use Lier\ScrambleExtensions\Appendable\AppendMethodCallExtension;
 use Lier\ScrambleExtensions\Appendable\AppendsEachMethodCallExtension;
 use Lier\ScrambleExtensions\Appendable\InferAppendableAnonymousResourceCollection;
 use Lier\ScrambleExtensions\Appendable\InferAppendJsonResource;
+use Lier\ScrambleExtensions\Appendable\MergeWhenCallExtension;
 use Lier\ScrambleExtensions\Pagination\LengthAwarePaginatorSchemaExtension;
 use Lier\ScrambleExtensions\Pagination\PaginatedOperationExtension;
 use Lier\ScrambleExtensions\Properties\PropertyTypesFromPhpDocExtension;
@@ -52,7 +53,8 @@ class ExtensionRegistry
         AppendsEachMethodCallExtension::class,
         InferAppendableAnonymousResourceCollection::class,
         InferAppendJsonResource::class,
-        AppendableResourceCollectionToSchema::class
+        AppendableResourceCollectionToSchema::class,
+        MergeWhenCallExtension::class,
     ];
 
     /**

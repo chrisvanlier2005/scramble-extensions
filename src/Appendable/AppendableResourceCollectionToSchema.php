@@ -18,8 +18,10 @@ use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\FlattensMergeValues;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\MergesOpenApiObjects;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Http\Resources\MergeValue;
 use Illuminate\Support\Collection;
 use Lier\ScrambleExtensions\Support\OpenApiObjectHelper;
+use Webmozart\Assert\Assert;
 
 /**
  * @todo Refactor and reformat code. For now experimental.
@@ -45,7 +47,7 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
 
         $array = (new ResourceCollectionTypeInfer)->getBasicCollectionType($definition);
 
-        $typesToAppend = [];
+        $typesToAppend = new Collection();
 
         if ($type instanceof Generic) {
             $typesToAppend = Collection::make($type->templateTypes)
@@ -56,6 +58,21 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
                     $returnType = $ft->returnType;
 
                     return Collection::make($returnType->items)
+                        ->flatMap(function (ArrayItemType_ $item) {
+                            if ($item->key === null && $item->value->isInstanceOf(MergeValue::class)) {
+                                Assert::isInstanceOf($item->value, Generic::class);
+
+                                $items = $item->value->templateTypes[1] ?? null;
+
+                                if (!$items instanceof KeyedArrayType) {
+                                    return [];
+                                }
+
+                                return $items->items;
+                            }
+
+                            return [$item];
+                        })
                         ->mapWithKeys(fn (ArrayItemType_ $item) => [
                             (string) $item->key => $this->openApiTransformer->transform($item),
                         ]);
@@ -106,6 +123,21 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
 
         /** @var \Illuminate\Support\Collection<string, mixed> $mappedValuesToAppend */
         $mappedValuesToAppend = Collection::make($appendEach->returnType->items)
+            ->flatMap(function (ArrayItemType_ $item) {
+                if ($item->key === null && $item->value->isInstanceOf(MergeValue::class)) {
+                    Assert::isInstanceOf($item->value, Generic::class);
+
+                    $items = $item->value->templateTypes[1] ?? null;
+
+                    if (!$items instanceof KeyedArrayType) {
+                        return [];
+                    }
+
+                    return $items->items;
+                }
+
+                return [$item];
+            })
             ->mapWithKeys(function (ArrayItemType_ $item) {
                 return [
                     (string) $item->key => $this->openApiTransformer->transform($item),
