@@ -3,6 +3,7 @@
 namespace Lier\ScrambleExtensions\Support;
 
 use Dedoc\Scramble\Support\Generator\Types\ObjectType;
+use Illuminate\Support\Collection;
 
 class OpenApiObjectHelper
 {
@@ -28,5 +29,15 @@ class OpenApiObjectHelper
         $object->setRequired($required);
 
         return $object;
+    }
+
+    /**
+     * @param \Illuminate\Support\Collection $collection
+     * @param list<string> $requiredKeys
+     * @return \Dedoc\Scramble\Support\Generator\Types\ObjectType
+     */
+    public static function createObjectTypeFromCollection(Collection $collection, array $requiredKeys = []): ObjectType
+    {
+        return self::createObjectTypeFromArray($collection->toArray(), $requiredKeys);
     }
 }

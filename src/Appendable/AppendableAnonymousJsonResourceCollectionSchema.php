@@ -2,27 +2,26 @@
 
 namespace Lier\ScrambleExtensions\Appendable;
 
+use Dedoc\Scramble\Support\Generator;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\Generator\Types\ArrayType as OpenApiArrayType;
-use Dedoc\Scramble\Support\Generator\Types\UnknownType;
 use Dedoc\Scramble\Support\Type\ArrayItemType_;
-use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
-use Dedoc\Scramble\Support\Type\Union;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Http\Resources\MissingValue;
-use Illuminate\Support\Collection;
+use Lier\ScrambleExtensions\Support\Concerns\InteractsWithTaggedTypes;
 use Lier\ScrambleExtensions\Support\OpenApiObjectHelper;
+use Lier\ScrambleExtensions\Support\Types\TaggedKeyedArrayType;
+use Webmozart\Assert\Assert;
 
 class AppendableAnonymousJsonResourceCollectionSchema extends AnonymousResourceCollectionTypeToSchema
 {
+    use InteractsWithTaggedTypes;
+
     /**
      * Determine whether the extension should handle the given type.
      *
@@ -39,36 +38,87 @@ class AppendableAnonymousJsonResourceCollectionSchema extends AnonymousResourceC
      * Convert the given type to an OpenAPI schema.
      *
      * @param \Dedoc\Scramble\Support\Type\Generic $type
-     * @return OpenApiArrayType
+     * @return \Dedoc\Scramble\Support\Generator\Types\ArrayType
      */
-    public function toSchema(Type $type): OpenApiArrayType
+    public function toSchema(Type $type): ?Generator\Types\ArrayType
     {
-        $typesToAppend = Collection::make($type->templateTypes)
-            ->filter(fn (Type $type) => $type instanceof FunctionType)
-            ->filter(fn (FunctionType $ft) => $ft->returnType instanceof KeyedArrayType)
-            ->flatMap(function (FunctionType $ft) {
-                /** @var \Dedoc\Scramble\Support\Type\KeyedArrayType $returnType */
-                $returnType = $ft->returnType;
+        Assert::isInstanceOf($type, Generic::class);
 
-                return Collection::make($returnType->items)
-                    ->mapWithKeys(fn (ArrayItemType_ $item) => [
-                        (string) $item->key => $this->openApiTransformer->transform($item),
-                    ]);
-            });
+        $collectingResourceType = $this->getCollectingResourceType($type);
 
-        $resourceOpenApiType = $this->openApiTransformer->transform(
-            $this->getCollectingResourceType($type),
-        );
-
-        if ($typesToAppend->isEmpty()) {
-            return new OpenApiArrayType()->setItems($resourceOpenApiType);
+        if ($collectingResourceType === null) {
+            return null;
         }
 
-        return new OpenApiArrayType()->setItems(
+        $resourceSchema = $this->openApiTransformer->transform($collectingResourceType);
+
+        $appendEachCallParameters = $this->collectAppendEachTypes($type);
+
+        if ($appendEachCallParameters->isEmpty()) {
+            return new Generator\Types\ArrayType()->setItems($resourceSchema);
+        }
+
+        $transformed = $appendEachCallParameters->mapWithKeys(function (ArrayItemType_ $item) {
+            $key = $item->key ?? 'unknown';
+
+            return [(string) $key => $this->openApiTransformer->transform($item)];
+        });
+
+        return new Generator\Types\ArrayType()->setItems(
             new AllOf()->setItems([
-                $resourceOpenApiType,
-                OpenApiObjectHelper::createObjectTypeFromArray($typesToAppend->toArray()),
+                $resourceSchema,
+                OpenApiObjectHelper::createObjectTypeFromCollection($transformed),
             ]),
+        );
+    }
+
+    /**
+     * Convert the given type to an OpenAPI response.
+     *
+     * Is called when converting an anonymous resource to an OpenAPI response.
+     * E.g. `UserResource::collection($users)->appendEach(...)->additional(...)`
+     *
+     * @param \Dedoc\Scramble\Support\Type\Generic $type
+     * @return \Dedoc\Scramble\Support\Generator\Response|null
+     */
+    public function toResponse(Type $type): ?Response
+    {
+        Assert::isInstanceOf($type, Generic::class);
+
+        $collectingResourceType = $this->getCollectingResourceType($type);
+        $appendEachParameters = $this->collectAppendEachTypes($type);
+
+        $transformed = $appendEachParameters->mapWithKeys(function (ArrayItemType_ $item) {
+            $key = $item->key ?? 'unknown';
+
+            return [(string) $key => $this->openApiTransformer->transform($item)];
+        });
+
+        $openApiType = $this->openApiTransformer->transform($collectingResourceType);
+
+        if ($transformed->isNotEmpty()) {
+            $openApiType = new AllOf()->setItems([
+                $openApiType,
+                OpenApiObjectHelper::createObjectTypeFromCollection($transformed),
+            ]);
+        }
+
+        $openApiType = OpenApiObjectHelper::createObjectTypeFromArray([
+            'data' => new Generator\Types\ArrayType()->setItems($openApiType),
+        ], ['data']);
+
+        $additional = $this->collectAdditionalType($type);
+
+        if ($additional instanceof TaggedKeyedArrayType) {
+            $additional = $additional->toKeyedArrayType();
+            $additional->items = $this->flattenMergeValues($additional->items);
+
+            $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($additional));;
+        }
+
+        return Response::make(200)->setContent(
+            'application/json',
+            Schema::fromType($openApiType),
         );
     }
 
@@ -86,106 +136,5 @@ class AppendableAnonymousJsonResourceCollectionSchema extends AnonymousResourceC
             $type->templateTypes[0],
             fn (Type $t) => $t->isInstanceOf(JsonResource::class),
         );
-    }
-
-    /**
-     * @param \Dedoc\Scramble\Support\Type\Generic $type
-     * @return \Dedoc\Scramble\Support\Generator\Response|null
-     * @todo refactor.
-     */
-    public function toResponse(Type $type): ?Response
-    {
-        $appendEach = $type->templateTypes[1] ?? null;
-        $additional = $type->templateTypes[2 /* TAdditional */] ?? new UnknownType;
-
-        if (!$appendEach instanceof FunctionType || !$appendEach->returnType instanceof KeyedArrayType) {
-            return null;
-        }
-
-        $collectingResourceType = $this->getCollectingResourceType($type);
-
-        /** @var \Illuminate\Support\Collection<string, mixed> $mappedValuesToAppend */
-        $mappedValuesToAppend = Collection::make($appendEach->returnType->items)
-            ->mapWithKeys(function (ArrayItemType_ $item) {
-                return [
-                    (string) $item->key => $this->openApiTransformer->transform($item),
-                ];
-            });
-
-        if ($mappedValuesToAppend->isEmpty()) {
-            return null;
-        }
-
-        $objectAppends = OpenApiObjectHelper::createObjectTypeFromArray(
-            $mappedValuesToAppend->toArray(),
-            $mappedValuesToAppend->keys()->diff($this->getOptionalKeys($appendEach->returnType))->toArray(),
-        );
-
-        $jsonResourceOpenApiType = $this->openApiTransformer->transform($collectingResourceType);
-
-        $openApiType = (new AllOf())
-            ->setItems([
-                $jsonResourceOpenApiType,
-                $objectAppends,
-            ]);
-
-        $openApiType = new OpenApiArrayType()
-            ->setItems($openApiType);
-
-        $openApiType = OpenApiObjectHelper::createObjectTypeFromArray([
-            'data' => $openApiType,
-        ], ['data']);
-
-        if ($additional instanceof KeyedArrayType) {
-            $additional->items = $this->flattenMergeValues($additional->items);
-            $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($additional));;
-        }
-
-        return Response::make(200)->setContent(
-            'application/json',
-            Schema::fromType($openApiType),
-        );
-    }
-
-    /**
-     * Get the keys that are optional in the given keyed array type.
-     * Null-coalescing is transformed to a `Union` type. So we can infer the MissingValue type.
-     *
-     * <code>
-     *     UserResource::make($user)->append(fn () => [
-     *        'property' => PropertyResource::make($user->property ?? new MissingValue()),
-     *     ])
-     * </code>
-     *
-     * @param \Dedoc\Scramble\Support\Type\KeyedArrayType $items
-     * @return array<string>
-     */
-    private function getOptionalKeys(KeyedArrayType $items): array
-    {
-        $keys = [];
-
-        foreach ($items->items as $item) {
-            if (!$item->value instanceof Generic) {
-                continue;
-            }
-
-            $type = $item->value->templateTypes[0] ?? null;
-
-            if (!$type instanceof Union) {
-                continue;
-            }
-
-            foreach ($type->types as $unionType) {
-                if (!$unionType instanceof \Dedoc\Scramble\Support\Type\ObjectType) {
-                    continue;
-                }
-
-                if ($unionType->isInstanceOf(MissingValue::class)) {
-                    $keys[] = (string) $item->key;
-                }
-            }
-        }
-
-        return $keys;
     }
 }

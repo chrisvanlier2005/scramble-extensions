@@ -35,14 +35,7 @@ class AppendsEachMethodCallExtension implements MethodReturnTypeExtension
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
         return match ($event->name) {
-            'appendEach' => new Generic(
-                name: $event->getInstance()->name,
-                templateTypes: $event->getInstance()->templateTypes,
-            ),
-            'preserveQuery' => new Generic( // Otherwise it's `UnknownType`, causing an empty response.
-                name: $event->getInstance()->name,
-                templateTypes: $event->getInstance()->templateTypes,
-            ),
+            'appendEach', 'preserveQuery' => $event->getInstance(),
             default => null,
         };
     }

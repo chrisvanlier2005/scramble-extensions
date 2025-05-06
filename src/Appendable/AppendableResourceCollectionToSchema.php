@@ -20,8 +20,9 @@ use Dedoc\Scramble\Support\TypeToSchemaExtensions\MergesOpenApiObjects;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Http\Resources\MergeValue;
 use Illuminate\Support\Collection;
+use Lier\ScrambleExtensions\Support\Concerns\InteractsWithTaggedTypes;
 use Lier\ScrambleExtensions\Support\OpenApiObjectHelper;
-use Webmozart\Assert\Assert;
+use Lier\ScrambleExtensions\Support\Types\TaggedKeyedArrayType;
 
 /**
  * @todo Refactor and reformat code. For now experimental.
@@ -30,6 +31,7 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
 {
     use FlattensMergeValues;
     use MergesOpenApiObjects;
+    use InteractsWithTaggedTypes;
 
     /**
      * Determine whether the extension should handle the given type.
@@ -39,7 +41,7 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
      */
     public function shouldHandle(Type $type): bool
     {
-        return $type instanceof ObjectType
+        return ($type instanceof ObjectType)
             && $type->isInstanceOf(ResourceCollection::class);
     }
 
@@ -53,30 +55,20 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
     {
         $definition = $this->infer->analyzeClass($type->name);
 
+
         $collectionType = new ResourceCollectionTypeInfer()->getBasicCollectionType($definition);
 
         $typesToAppend = new Collection();
 
         if ($type instanceof Generic) {
-            $typesToAppend = Collection::make($type->templateTypes)
-                ->filter(fn (Type $type) => $type instanceof FunctionType)
-                ->filter(fn (FunctionType $ft) => $ft->returnType instanceof KeyedArrayType)
-                ->flatMap(function (FunctionType $ft) {
-                    /** @var \Dedoc\Scramble\Support\Type\KeyedArrayType $returnType */
-                    $returnType = $ft->returnType;
+            $appendEachCallParameters = $this->collectAppendEachTypes($type);
 
-                    return Collection::make($returnType->items)
-                        ->flatMap(function (ArrayItemType_ $item) {
-                            if ($item->isInstanceOf(MergeValue::class)) {
-                                return $this->unpackMergeKeyedArrayValue($item->value) ?? [];
-                            }
+            // TODO: additional?
+            $typesToAppend = $appendEachCallParameters->mapWithKeys(function (ArrayItemType_ $item) {
+                $key = $item->key ?? 'unknown';
 
-                            return [$item];
-                        })
-                        ->mapWithKeys(fn (ArrayItemType_ $item) => [
-                            (string) $item->key => $this->openApiTransformer->transform($item),
-                        ]);
-                });
+                return [(string) $key => $this->openApiTransformer->transform($item)];
+            });
         }
 
         if ($collectionType instanceof \Dedoc\Scramble\Support\Type\UnknownType) {
@@ -111,12 +103,7 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
             return null; // Can be handled by a different extension.
         }
 
-        $appendEach = $type->templateTypes[1] ?? null;
-        $additional = $type->templateTypes[2] ?? new UnknownType();
-
-        if (!$appendEach instanceof FunctionType || !$appendEach->returnType instanceof KeyedArrayType) {
-            return null;
-        }
+        $appendEachCallParameters = $this->collectAppendEachTypes($type);
 
         $definition = $this->infer->analyzeClass($type->name);
         $collecting = new ResourceCollectionTypeInfer()->getBasicCollectionType($definition);
@@ -127,35 +114,20 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
 
         $collecting = $collecting->value;
 
-        /** @var \Illuminate\Support\Collection<string, mixed> $mappedValuesToAppend */
-        $mappedValuesToAppend = Collection::make($appendEach->returnType->items)
-            ->flatMap(function (ArrayItemType_ $item) {
-                if ($item->value->isInstanceOf(MergeValue::class)) {
-                    return $this->unpackMergeKeyedArrayValue($item->value) ?? [];
-                }
+        $transformed = $appendEachCallParameters->mapWithKeys(function (ArrayItemType_ $item) {
+            $key = $item->key ?? 'unknown';
 
-                return [$item];
-            })
-            ->mapWithKeys(function (ArrayItemType_ $item) {
-                return [
-                    (string) $item->key => $this->openApiTransformer->transform($item),
-                ];
-            });
+            return [(string) $key => $this->openApiTransformer->transform($item)];
+        });
 
-        $resource = $this->openApiTransformer->transform($collecting);
+        $openApiType = $this->openApiTransformer->transform($collecting);
 
-        if ($mappedValuesToAppend->isEmpty()) {
-            return $resource;
+        if ($transformed->isNotEmpty()) {
+            $openApiType = new AllOf()->setItems([
+                $openApiType,
+                OpenApiObjectHelper::createObjectTypeFromCollection($transformed),
+            ]);
         }
-
-        $objectAppends = OpenApiObjectHelper::createObjectTypeFromArray(
-            $mappedValuesToAppend->toArray(),
-        );
-
-        $openApiType = new AllOf()->setItems([
-            $resource,
-            $objectAppends,
-        ]);
 
         $openApiType = OpenApiObjectHelper::createObjectTypeFromArray([
             'data' => new OpenApiArrayType()->setItems($openApiType),
@@ -167,7 +139,10 @@ class AppendableResourceCollectionToSchema extends TypeToSchemaExtension
             $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($withArray));
         }
 
-        if ($additional instanceof KeyedArrayType) {
+        $additional = $this->collectAdditionalType($type);
+
+        if ($additional instanceof TaggedKeyedArrayType) {
+            $additional = $additional->toKeyedArrayType();
             $additional->items = $this->flattenMergeValues($additional->items);
 
             $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($additional));

@@ -7,6 +7,7 @@ use Lier\ScrambleExtensions\Appendable\AppendableJsonResourceToSchema;
 use Lier\ScrambleExtensions\Appendable\AppendableResourceCollectionToSchema;
 use Lier\ScrambleExtensions\Appendable\AppendMethodCallExtension;
 use Lier\ScrambleExtensions\Appendable\AppendsEachMethodCallExtension;
+use Lier\ScrambleExtensions\Appendable\InferAdditionalFromResourceCollection;
 use Lier\ScrambleExtensions\Appendable\InferAppendableAnonymousResourceCollection;
 use Lier\ScrambleExtensions\Appendable\InferAppendJsonResource;
 use Lier\ScrambleExtensions\Appendable\MergeWhenCallExtension;
@@ -47,6 +48,7 @@ class ExtensionRegistry
      * @var list<class-string>
      */
     public const array APPENDABLE_RESOURCES = [
+        InferAdditionalFromResourceCollection::class,
         AppendableAnonymousJsonResourceCollectionSchema::class,
         AppendableJsonResourceToSchema::class,
         AppendMethodCallExtension::class,

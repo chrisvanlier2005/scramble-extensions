@@ -13,11 +13,17 @@ use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
 use Illuminate\Support\Collection;
+use Lier\ScrambleExtensions\Support\Concerns\InteractsWithTaggedTypes;
 use Lier\ScrambleExtensions\Support\OpenApiObjectHelper;
 use Webmozart\Assert\Assert;
 
+/**
+ * @todo refactor.
+ */
 class AppendableJsonResourceToSchema extends JsonResourceTypeToSchema
 {
+    use InteractsWithTaggedTypes;
+
     public static string $jsonResourceName = 'App\Http\Resources\JsonResource';
     public static string $anonymousResourceCollectionName = 'App\Http\Resources\AnonymousResourceCollection';
 
