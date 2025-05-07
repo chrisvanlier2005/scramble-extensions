@@ -56,6 +56,9 @@ class ExtensionRegistry
         InferAppendableAnonymousResourceCollection::class,
         InferAppendJsonResource::class,
         AppendableResourceCollectionToSchema::class,
+
+        // TODO: make it's own category? Not directly related to appendable resources, but
+        // its used in the same context.
         MergeWhenCallExtension::class,
     ];
 
@@ -63,6 +66,7 @@ class ExtensionRegistry
      * @var list<class-string>
      */
     public const array PAGINATION = [
+        // TODO: extend with more pagination types. e.g. `SimplePaginator` & `CursorPaginator`
         LengthAwarePaginatorSchemaExtension::class,
         PaginatedOperationExtension::class,
     ];
