@@ -6,8 +6,8 @@ use Dedoc\Scramble\Support\Generator;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\TypeWalker;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema;
@@ -50,25 +50,22 @@ class AppendableAnonymousJsonResourceCollectionSchema extends AnonymousResourceC
             return null;
         }
 
-        $resourceSchema = $this->openApiTransformer->transform($collectingResourceType);
-
         $appendEachCallParameters = $this->collectAppendEachTypes($type);
+
+        $resourceSchema = $this->openApiTransformer->transform($collectingResourceType);
 
         if ($appendEachCallParameters->isEmpty()) {
             return new Generator\Types\ArrayType()->setItems($resourceSchema);
         }
 
-        $transformed = $appendEachCallParameters->mapWithKeys(function (ArrayItemType_ $item) {
-            $key = $item->key ?? 'unknown';
-
-            return [(string) $key => $this->openApiTransformer->transform($item)];
-        });
+        $transformed = $this->openApiTransformer->transform(
+            // We must wrap it in a `KeyedArrayType` so that
+            // the type transformer can infer `?? new MissingValue()`
+            new KeyedArrayType($appendEachCallParameters->toArray()),
+        );
 
         return new Generator\Types\ArrayType()->setItems(
-            new AllOf()->setItems([
-                $resourceSchema,
-                OpenApiObjectHelper::createObjectTypeFromCollection($transformed),
-            ]),
+            new AllOf()->setItems([$resourceSchema, $transformed]),
         );
     }
 
@@ -88,19 +85,16 @@ class AppendableAnonymousJsonResourceCollectionSchema extends AnonymousResourceC
         $collectingResourceType = $this->getCollectingResourceType($type);
         $appendEachParameters = $this->collectAppendEachTypes($type);
 
-        $transformed = $appendEachParameters->mapWithKeys(function (ArrayItemType_ $item) {
-            $key = $item->key ?? 'unknown';
-
-            return [(string) $key => $this->openApiTransformer->transform($item)];
-        });
-
         $openApiType = $this->openApiTransformer->transform($collectingResourceType);
 
-        if ($transformed->isNotEmpty()) {
-            $openApiType = new AllOf()->setItems([
-                $openApiType,
-                OpenApiObjectHelper::createObjectTypeFromCollection($transformed),
-            ]);
+        if ($appendEachParameters->isNotEmpty()) {
+            $transformed = $this->openApiTransformer->transform(
+                // We must wrap it in a `KeyedArrayType` so that
+                // the type transformer can infer `?? new MissingValue()`
+                new KeyedArrayType($appendEachParameters->toArray()),
+            );
+
+            $openApiType = new AllOf()->setItems([$openApiType, $transformed]);
         }
 
         $openApiType = OpenApiObjectHelper::createObjectTypeFromArray([
@@ -113,7 +107,7 @@ class AppendableAnonymousJsonResourceCollectionSchema extends AnonymousResourceC
             $additional = $additional->toKeyedArrayType();
             $additional->items = $this->flattenMergeValues($additional->items);
 
-            $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($additional));;
+            $this->mergeOpenApiObjects($openApiType, $this->openApiTransformer->transform($additional));
         }
 
         return Response::make(200)->setContent(
@@ -125,13 +119,12 @@ class AppendableAnonymousJsonResourceCollectionSchema extends AnonymousResourceC
     /**
      * Get the collecting resource type from the given generic type.
      *
-     * @see AnonymousResourceCollectionTypeToSchema::getCollectingResourceType()
      * @param \Dedoc\Scramble\Support\Type\Generic $type
-     * @return mixed
+     * @return \Dedoc\Scramble\Support\Type\Type|null
+     * @see \Dedoc\Scramble\Support\TypeToSchemaExtensions\AnonymousResourceCollectionTypeToSchema::getCollectingResourceType()
      */
-    private function getCollectingResourceType(Generic $type): mixed
+    private function getCollectingResourceType(Generic $type): ?Type
     {
-        // In the case of paginated resource, we still want to get to the underlying JsonResource.
         return new TypeWalker()->first(
             $type->templateTypes[0],
             fn (Type $t) => $t->isInstanceOf(JsonResource::class),

@@ -2,7 +2,6 @@
 
 namespace Lier\ScrambleExtensions\Support\Concerns;
 
-use Dedoc\Scramble\Support\Type\ArrayItemType_;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\Type;
@@ -38,12 +37,21 @@ trait InteractsWithTaggedTypes
 
     /**
      * @param \Dedoc\Scramble\Support\Type\Generic $type
-     * @return \Illuminate\Support\Collection
+     * @return \Lier\ScrambleExtensions\Support\Types\TaggedKeyedArrayType|null
      */
-    private function collectAppendTypes(Generic $type): Collection
+    private function collectAppendType(Generic $type): ?TaggedKeyedArrayType
     {
-        // WIP
-        return new Collection();
+        return new Collection($type->templateTypes)
+            ->where(function (Type $type) {
+                return $type instanceof TaggedKeyedArrayType
+                    && $type->tag === 'append';
+            })
+            ->map(function (TaggedKeyedArrayType $type) {
+                $type->items = $this->flattenMergeValues($type->items);
+
+                return $type;
+            })
+            ->first();
     }
 
     /**

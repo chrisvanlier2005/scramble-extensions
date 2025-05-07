@@ -5,27 +5,21 @@ namespace Lier\ScrambleExtensions\Appendable;
 use Dedoc\Scramble\Support\Generator\Combined\AllOf;
 use Dedoc\Scramble\Support\Generator\Response;
 use Dedoc\Scramble\Support\Generator\Schema;
-use Dedoc\Scramble\Support\Generator\Types\ObjectType as OpenApiObjectType;
-use Dedoc\Scramble\Support\Type\ArrayItemType_;
+use Dedoc\Scramble\Support\Generator;
 use Dedoc\Scramble\Support\Type\Generic;
-use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\TypeToSchemaExtensions\JsonResourceTypeToSchema;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
 use Lier\ScrambleExtensions\Support\Concerns\InteractsWithTaggedTypes;
-use Lier\ScrambleExtensions\Support\OpenApiObjectHelper;
+use Lier\ScrambleExtensions\Support\Types\TaggedType;
 use Webmozart\Assert\Assert;
 
-/**
- * @todo refactor, and use reusable components.
- */
 class AppendableJsonResourceToSchema extends JsonResourceTypeToSchema
 {
     use InteractsWithTaggedTypes;
-
-    public static string $jsonResourceName = 'App\Http\Resources\JsonResource';
-    public static string $anonymousResourceCollectionName = 'App\Http\Resources\AnonymousResourceCollection';
 
     /**
      * @param \Dedoc\Scramble\Support\Type\Type $type
@@ -34,40 +28,40 @@ class AppendableJsonResourceToSchema extends JsonResourceTypeToSchema
     public function shouldHandle(Type $type): bool
     {
         return $type instanceof Generic
-            && $type->isInstanceOf(self::$jsonResourceName)
-            && !$type->isInstanceOf(self::$anonymousResourceCollectionName)
-            && count($type->templateTypes) === 2;
+            && $type->isInstanceOf(JsonResource::class)
+            && !$type->isInstanceOf(AnonymousResourceCollection::class)
+            && $this->collectAppendType($type) !== null;
     }
 
     /**
      * @param \Dedoc\Scramble\Support\Type\Generic $type
-     * @return mixed
+     * @return \Dedoc\Scramble\Support\Generator\Types\Type
      */
-    public function toSchema(Type $type): mixed
+    public function toSchema(Type $type): Generator\Types\Type
     {
-        // TODO: refactor this ;-;
-        $appendableTypes = Collection::make($type->templateTypes)
-            ->filter(fn (Type $type) => $type instanceof KeyedArrayType)
-            ->flatMap(function (KeyedArrayType $keyedArrayType) {
-                return Collection::make($keyedArrayType->items)
-                    ->mapWithKeys(fn (ArrayItemType_ $item) => [
-                        (string)$item->key => $this->openApiTransformer->transform($item),
-                    ]);
-            });
+        Assert::isInstanceOf($type, Generic::class);
 
+        $appendCallType = $this->collectAppendType($type);
+
+        // TODO: copy the toSchema from JsonResourceTypeToSchema
         $newType = clone $type;
-
-        $newType->templateTypes = Collection::make($type->templateTypes)
-            ->filter(fn (mixed $templateType) => !$templateType instanceof KeyedArrayType)
+        $newType->templateTypes = new Collection($type->templateTypes)
+            ->reject(function (Type $t) {
+                return $t instanceof TaggedType;
+            })
             ->toArray();
 
-        if ($appendableTypes->isEmpty()) {
-            return $this->openApiTransformer->transform($newType);
+        $schema = $this->openApiTransformer->transform($newType);
+
+        if ($appendCallType === null) {
+            return $schema;
         }
 
+        $transformed = $this->openApiTransformer->transform($appendCallType->toKeyedArrayType());
+
         return new AllOf()->setItems([
-            $this->openApiTransformer->transform($newType),
-            OpenApiObjectHelper::createObjectTypeFromArray($appendableTypes->toArray()),
+            $schema,
+            $transformed,
         ]);
     }
 
@@ -77,45 +71,42 @@ class AppendableJsonResourceToSchema extends JsonResourceTypeToSchema
      */
     public function toResponse(Type $type): Response
     {
-        // TODO: refactor this ;-;
         Assert::isInstanceOf($type, Generic::class);
 
-        $newType = clone $type;
-
-        $newType->templateTypes = Collection::make($type->templateTypes)
-            ->filter(fn (mixed $templateType) => !$templateType instanceof KeyedArrayType)
+        $cloned = clone $type;
+        $cloned->templateTypes = new Collection($type->templateTypes)
+            ->reject(fn (Type $t) => $t instanceof TaggedType)
             ->toArray();
 
-        $openApiType = $this->openApiTransformer->transform($newType);
+        $resourceType = $this->openApiTransformer->transform($cloned);
 
-        $appends = Collection::make($type->templateTypes)
-            ->whereInstanceOf(KeyedArrayType::class)
-            ->flatMap(function (KeyedArrayType $keyedArrayType) {
-                return $keyedArrayType->items;
-            })
-            ->mapWithKeys(fn(ArrayItemType_ $item) => [
-                (string) $item->key => $this->openApiTransformer->transform($item),
-            ]);
+        $appends = $this->collectAppendType($type);
 
-        if ($appends->isNotEmpty()) {
-            $openApiType = (new AllOf())
-                ->setItems([
-                    $openApiType,
-                    OpenApiObjectHelper::createObjectTypeFromArray($appends->toArray()),
-                ]);
+        if ($appends !== null) {
+            // We must wrap it in a `KeyedArrayType` so that
+            // the type transformer can infer `?? new MissingValue()`
+            $transformed = $this->openApiTransformer->transform($appends->toKeyedArrayType());
+
+            $resourceType = new AllOf()->setItems([$resourceType, $transformed]);
         }
 
-        $openApiType = (new OpenApiObjectType())
-            ->addProperty('data', $openApiType)
+        $resourceType = new Generator\Types\ObjectType()
+            ->addProperty('data', $resourceType)
             ->setRequired(['data']);
 
         return Response::make(200)->setContent(
             'application/json',
-            Schema::fromType($openApiType),
+            Schema::fromType($resourceType),
         );
     }
 
-    public function reference(ObjectType $type)
+    /**
+     * Convert the type to a reference.
+     *
+     * @param \Dedoc\Scramble\Support\Type\ObjectType $type
+     * @return null
+     */
+    public function reference(ObjectType $type): null
     {
         return null;
     }
