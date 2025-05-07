@@ -1,0 +1,479 @@
+openapi: 3.1.0
+info:
+  title: Laravel
+  version: 0.0.1
+servers:
+  -
+    url: 'http://localhost/api'
+paths:
+  /list-products:
+    get:
+      tags:
+        - PaginatedProduct
+      summary: 'List products'
+      description: 'Displays a listing of products.'
+      operationId: test.list-products
+      parameters:
+        -
+          name: page
+          in: query
+          description: 'The current page number'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                allOf:
+                  -
+                    required:
+                      - data
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ProductResource'
+                  -
+                    $ref: '#/components/schemas/LengthAwarePaginator'
+  /products-with-filters:
+    get:
+      tags:
+        - ProductWithComplexFilters
+      summary: 'List products'
+      description: 'Displays a listing of products.'
+      operationId: test.products-with-filters
+      parameters:
+        -
+          name: string_rule
+          in: query
+          schema:
+            type: string
+        -
+          name: array_rule
+          in: query
+          schema:
+            maxLength: 255
+            minLength: 1
+            type: string
+          example: "'john doe'"
+        -
+          name: names
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductResource'
+        '422':
+          $ref: '#/components/responses/ValidationException'
+  /basic-user-crud:
+    get:
+      tags:
+        - UserWithAppends
+      operationId: test.basic-user-crud.index
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                  - names
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                        -
+                          $ref: '#/components/schemas/UserResource'
+                        -
+                          required:
+                            - posts
+                          type: object
+                          properties:
+                            posts:
+                              type: array
+                              items:
+                                allOf:
+                                  -
+                                    $ref: '#/components/schemas/PostResource'
+                                  -
+                                    required:
+                                      - liked_by_users
+                                    type: object
+                                    properties:
+                                      author:
+                                        $ref: '#/components/schemas/UserResource'
+                                      liked_by_users:
+                                        type: array
+                                        items:
+                                          $ref: '#/components/schemas/UserResource'
+                  names:
+                    type: string
+    post:
+      tags:
+        - UserWithAppends
+      operationId: test.basic-user-crud.store
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreUserRequest'
+        required: true
+      responses:
+        '201':
+          description: '`UserResource`'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                  - authorizations
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserResource'
+                  authorizations:
+                    required:
+                      - users
+                    type: object
+                    properties:
+                      users:
+                        required:
+                          - view
+                          - update
+                          - delete
+                        type: object
+                        properties:
+                          view:
+                            type: boolean
+                          update:
+                            type: boolean
+                          delete:
+                            type: boolean
+        '422':
+          $ref: '#/components/responses/ValidationException'
+        '403':
+          $ref: '#/components/responses/AuthorizationException'
+  '/basic-user-crud/{basic_user_crud}':
+    get:
+      tags:
+        - UserWithAppends
+      operationId: test.basic-user-crud.show
+      parameters:
+        -
+          name: basic_user_crud
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                type: object
+                properties:
+                  data:
+                    allOf:
+                      -
+                        $ref: '#/components/schemas/UserResource'
+                      -
+                        required:
+                          - name
+                        type: object
+                        properties:
+                          name:
+                            $ref: '#/components/schemas/Role'
+    put:
+      tags:
+        - UserWithAppends
+      operationId: test.basic-user-crud.update
+      parameters:
+        -
+          name: basic_user_crud
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+        required: true
+      responses:
+        '200':
+          description: '`UserResource`'
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                  - authorizations
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserResource'
+                  authorizations:
+                    required:
+                      - users
+                    type: object
+                    properties:
+                      users:
+                        required:
+                          - view
+                          - update
+                          - delete
+                        type: object
+                        properties:
+                          view:
+                            type: boolean
+                          update:
+                            type: boolean
+                          delete:
+                            type: boolean
+        '422':
+          $ref: '#/components/responses/ValidationException'
+        '403':
+          $ref: '#/components/responses/AuthorizationException'
+    delete:
+      tags:
+        - UserWithAppends
+      operationId: test.basic-user-crud.destroy
+      parameters:
+        -
+          name: basic_user_crud
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 'No content'
+components:
+  schemas:
+    LengthAwarePaginator:
+      title: LengthAwarePaginator
+      required:
+        - meta
+        - links
+      type: object
+      properties:
+        meta:
+          required:
+            - current_page
+            - from
+            - last_page
+            - path
+            - per_page
+            - to
+            - total
+          type: object
+          properties:
+            current_page:
+              type: integer
+            from:
+              type: integer
+            last_page:
+              type: integer
+            links:
+              type: array
+              items:
+                required:
+                  - url
+                  - label
+                  - active
+                type: object
+                properties:
+                  url:
+                    type:
+                      - string
+                      - 'null'
+                  label:
+                    type: string
+                  active:
+                    type:
+                      - boolean
+                      - 'null'
+            path:
+              type: string
+            per_page:
+              type: integer
+            to:
+              type: integer
+            total:
+              type: integer
+        links:
+          type: object
+          properties:
+            first:
+              type: string
+            last:
+              type: string
+            prev:
+              type: string
+            next:
+              type: string
+    Money:
+      title: Money
+      required:
+        - amount
+        - currency
+      type: object
+      properties:
+        amount:
+          type: string
+          description: 'The amount formatted as a string. `<= 999.999.999.999,0000`'
+          examples:
+            - '100000.2321'
+        currency:
+          maxLength: 3
+          minLength: 3
+          type: string
+          description: 'A 3-letter uppercase ISO 4217 currency code.'
+          examples:
+            - USD
+    PostResource:
+      title: PostResource
+      required:
+        - title
+        - content
+        - created_at
+        - updated_at
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ProductResource:
+      title: ProductResource
+      required:
+        - title
+        - price
+      type: object
+      properties:
+        title:
+          type: string
+        price:
+          $ref: '#/components/schemas/Money'
+    Role:
+      title: Role
+      enum:
+        - admin
+        - user
+        - guest
+      type: string
+    StoreUserRequest:
+      title: StoreUserRequest
+      required:
+        - name
+        - role
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+    UpdateUserRequest:
+      title: UpdateUserRequest
+      required:
+        - name
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          type: string
+    UserResource:
+      title: UserResource
+      required:
+        - name
+        - role
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+  responses:
+    ValidationException:
+      description: 'Validation error'
+      content:
+        application/json:
+          schema:
+            required:
+              - message
+              - errors
+            type: object
+            properties:
+              message:
+                type: string
+                description: 'Errors overview.'
+              errors:
+                type: object
+                description: 'A detailed description of each field that failed validation.'
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+    AuthorizationException:
+      description: 'Authorization error'
+      content:
+        application/json:
+          schema:
+            required:
+              - message
+            type: object
+            properties:
+              message:
+                type: string
+                description: 'Error overview.'
+  securitySchemes:
+    laravel-session:
+      type: apiKey
+      description: 'The authenticated session cookie'
+      name: laravel-session
+      in: cookie
+    csrf_token:
+      type: apiKey
+      description: 'A header containing the current CSRF token'
+      name: X-CSRF-TOKEN
+      in: header
+security:
+  -
+    laravel-session: []
+  -
+    csrf_token: []

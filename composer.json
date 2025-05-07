@@ -9,6 +9,11 @@
             "Lier\\ScrambleExtensions\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
     "authors": [
         {
             "name": "Chris van Lier",
@@ -41,6 +46,7 @@
         }
     },
     "require-dev": {
-        "orchestra/testbench": "^10.2.2"
+        "orchestra/testbench": "^10.2.2",
+        "phpunit/phpunit": "^12.1"
     }
 }

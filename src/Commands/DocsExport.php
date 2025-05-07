@@ -19,7 +19,8 @@ final class DocsExport extends Command
      */
     protected $signature = 'docs:export
         {--path= : The path to save the exported YAML file}
-        {--api=default : The API to export a documentation for}';
+        {--api=default : The API to export a documentation for}
+        {--skip-formatter=false : Skip formatting the YAML file}';
 
     /**
      * The console command description.
@@ -53,13 +54,16 @@ final class DocsExport extends Command
         Writer::writeToYamlFile($spec, $path);
 
         $this->info("Exported specification to {$path}.");
-        $this->info('Formatting...');
 
-        $process = new Process(['npx', 'openapi-format', $path, '-o', $path]);
-        $process->setTimeout(60);
-        $process->run();
+        if ($this->option('skip-formatter') === false) {
+            $this->info('Formatting...');
 
-        $this->info("{$path} formatted.");
+            $process = new Process(['npx', 'openapi-format', $path, '-o', $path]);
+            $process->setTimeout(60);
+            $process->run();
+
+            $this->info("{$path} formatted.");
+        }
 
         return 0;
     }
