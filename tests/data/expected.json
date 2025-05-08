@@ -111,7 +111,8 @@
                         "name": "string_rule",
                         "in": "query",
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "maxLength": 255
                         }
                     },
                     {
@@ -123,6 +124,17 @@
                             "maxLength": 255
                         },
                         "example": "'john doe'"
+                    },
+                    {
+                        "name": "in_rule",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "john",
+                                "doe"
+                            ]
+                        }
                     },
                     {
                         "name": "names",

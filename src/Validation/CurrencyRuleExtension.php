@@ -4,6 +4,7 @@ namespace Lier\ScrambleExtensions\Validation;
 
 use Dedoc\Scramble\Support\Generator\Types\Type as OpenApiType;
 use Dedoc\Scramble\Support\OperationExtensions\RulesExtractor\Rules\ValidationRuleExtension;
+use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 
@@ -17,9 +18,10 @@ final class CurrencyRuleExtension extends ValidationRuleExtension
      * @param \Dedoc\Scramble\Support\Type\Type $rule
      * @return bool
      */
-    public function shouldHandle(Type $rule): bool
+    public function shouldHandle(mixed $rule): bool
     {
-        return $rule->isInstanceOf(self::$ruleName);
+        return $rule instanceof ObjectType
+            && $rule->isInstanceOf(self::$ruleName);
     }
 
     /**
@@ -29,14 +31,14 @@ final class CurrencyRuleExtension extends ValidationRuleExtension
      * @param \Dedoc\Scramble\Support\Type\Type $rule
      * @return \Dedoc\Scramble\Support\Generator\Types\Type
      */
-    public function handle(OpenApiType $previousType, Type $rule): OpenApiType
+    public function handle(OpenApiType $previousType, mixed $rule): OpenApiType
     {
         $type = $this->openApiTransformer->transform(new ObjectType(
             '\Brick\Money\Currency',
         ));
 
         $type->setAttribute('required', $previousType->getAttribute('required', false));
-        $type->nullable = $previousType->nullable;
+        $type->nullable($previousType->nullable);
 
         return $type;
     }
