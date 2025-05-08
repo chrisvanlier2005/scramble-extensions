@@ -1,6 +1,6 @@
 <?php
 
-namespace Lier\ScrambleExtensions\Appendable;
+namespace Lier\ScrambleExtensions\Resources;
 
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;

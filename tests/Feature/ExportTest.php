@@ -42,8 +42,6 @@ final class ExportTest extends TestCase
 
         $this->assertFileExists($this->temporaryFile);
 
-        file_put_contents(__DIR__ . '/../data/expected.yml', file_get_contents($this->temporaryFile));
-
         $this->assertFileEquals(
             __DIR__ . '/../data/expected.yml',
             $this->temporaryFile,
