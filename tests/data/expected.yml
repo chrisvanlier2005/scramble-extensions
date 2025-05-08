@@ -6,6 +6,25 @@ servers:
   -
     url: 'http://localhost/api'
 paths:
+  /dto-response:
+    get:
+      tags:
+        - DtoResponse
+      summary: 'Dto response'
+      description: 'Displays a JSON response with a SimpleDto object, inference not supported without a custom to schema extension'
+      operationId: test.dto-response
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                type: object
+                properties:
+                  data:
+                    type: object
   /list-products:
     get:
       tags:
