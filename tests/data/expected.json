@@ -674,6 +674,12 @@
                     "name": {
                         "type": "string",
                         "maxLength": 255
+                    },
+                    "prohibited_with_route_parameter": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     }
                 },
                 "required": [
