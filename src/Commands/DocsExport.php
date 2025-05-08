@@ -10,6 +10,9 @@ use Illuminate\Console\Command;
 use Symfony\Component\Process\Process;
 use Webmozart\Assert\Assert;
 
+/**
+ * TODO: determine if orval can read the .json file. If so remove this.
+ */
 final class DocsExport extends Command
 {
     /**
@@ -55,7 +58,7 @@ final class DocsExport extends Command
 
         $this->info("Exported specification to {$path}.");
 
-        if ($this->option('skip-formatter') === false) {
+        if ($this->option('skip-formatter') === 'false') {
             $this->info('Formatting...');
 
             $process = new Process(['npx', 'openapi-format', $path, '-o', $path]);

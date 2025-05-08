@@ -10,7 +10,7 @@ class DtoResponseController
     /**
      * Dto response
      *
-     * Displays a JSON response with a SimpleDto object, inference not supported without a custom to schema extension
+     * Displays a JSON response with a SimpleDto object, inference not supported without a custom-to-schema extension
      */
     public function __invoke(): JsonResponse
     {

@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use Dedoc\Scramble\Console\Commands\ExportDocumentation;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Lier\ScrambleExtensions\Commands\DocsExport;
 use Lier\ScrambleExtensions\ExtensionRegistry;
 use RuntimeException;
+use Tests\Support\Controllers\DtoResponseController;
 use Tests\Support\Controllers\PaginatedProductController;
 use Tests\Support\Controllers\ProductControllerWithComplexFilters;
 use Tests\Support\Controllers\UserControllerWithAppends;
@@ -36,14 +38,14 @@ final class ExportTest extends TestCase
     {
         $this->registerRoutes();
 
-        Artisan::call(DocsExport::class, [
+        Artisan::call(ExportDocumentation::class, [
             '--path' => $this->temporaryFile,
         ]);
 
         $this->assertFileExists($this->temporaryFile);
 
         $this->assertFileEquals(
-            __DIR__ . '/../data/expected.yml',
+            __DIR__ . '/../data/expected.json',
             $this->temporaryFile,
         );
     }
@@ -55,6 +57,7 @@ final class ExportTest extends TestCase
             Route::get('list-products', PaginatedProductController::class)->name('list-products');
             Route::get('products-with-filters', ProductControllerWithComplexFilters::class)
                 ->name('products-with-filters');
+            Route::get('dto-response', DtoResponseController::class)->name('dto-response');
         });
     }
 }
