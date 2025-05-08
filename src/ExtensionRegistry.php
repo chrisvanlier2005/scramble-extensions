@@ -7,7 +7,7 @@ use Lier\ScrambleExtensions\Appendable\AppendableJsonResourceToSchema;
 use Lier\ScrambleExtensions\Appendable\AppendableResourceCollectionToSchema;
 use Lier\ScrambleExtensions\Appendable\AppendMethodCallExtension;
 use Lier\ScrambleExtensions\Appendable\AppendsEachMethodCallExtension;
-use Lier\ScrambleExtensions\Appendable\InferAdditionalFromResourceCollection;
+use Lier\ScrambleExtensions\Appendable\JsonResourceExtension;
 use Lier\ScrambleExtensions\Appendable\InferAppendableAnonymousResourceCollection;
 use Lier\ScrambleExtensions\Appendable\InferAppendJsonResource;
 use Lier\ScrambleExtensions\Pagination\LengthAwarePaginatorSchemaExtension;
@@ -48,13 +48,11 @@ class ExtensionRegistry
      * @var list<class-string>
      */
     public const array APPENDABLE_RESOURCES = [
-        InferAdditionalFromResourceCollection::class,
+        JsonResourceExtension::class,
         AppendableAnonymousJsonResourceCollectionSchema::class,
         AppendableJsonResourceToSchema::class,
         AppendMethodCallExtension::class,
         AppendsEachMethodCallExtension::class,
-        InferAppendableAnonymousResourceCollection::class,
-        InferAppendJsonResource::class,
         AppendableResourceCollectionToSchema::class,
 
         // TODO: make it's own category? Not directly related to appendable resources, but

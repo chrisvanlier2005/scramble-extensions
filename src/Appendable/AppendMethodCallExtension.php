@@ -6,9 +6,13 @@ use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
 use Dedoc\Scramble\Support\InferExtensions\JsonResourceExtension;
 use Dedoc\Scramble\Support\Type\Generic;
+use Dedoc\Scramble\Support\Type\KeyedArrayType;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
+use Dedoc\Scramble\Support\Type\TypeHelper;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Lier\ScrambleExtensions\Support\Types\TaggedKeyedArrayType;
+use UnexpectedValueException;
 
 class AppendMethodCallExtension extends JsonResourceExtension implements MethodReturnTypeExtension
 {
@@ -36,10 +40,50 @@ class AppendMethodCallExtension extends JsonResourceExtension implements MethodR
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
         return match ($event->name) {
-            'append' => new Generic($event->getInstance()->name, [
-                $event->getArg('additional', 0),
-                ...$event->getInstance()->templateTypes,
-            ]),
+            'append' => $event->getInstance() instanceof Generic
+                ? tap($event->getInstance(), function (Generic $type) use ($event) {
+                    $arg = $event->getArg('additional', 0);
+
+                    if (!$arg instanceof KeyedArrayType) {
+                        throw new UnexpectedValueException(sprintf(
+                            'Invalid type, expected %s, got %s',
+                            KeyedArrayType::class,
+                            get_debug_type($type)
+                        ));
+                    }
+
+                    $type->templateTypes = [
+                        ...$type->templateTypes,
+                        new TaggedKeyedArrayType(
+                            tag: 'append',
+                            items: $arg->items,
+                            isList: $arg->isList,
+                        ),
+                    ];
+                })
+                : null,
+            'additional' => $event->getInstance() instanceof Generic
+                ? tap($event->getInstance(), function (Generic $type) use ($event) {
+                    $arg = $event->getArg('data', 0);
+
+                    if (!$arg instanceof KeyedArrayType) {
+                        throw new UnexpectedValueException(sprintf(
+                            'Invalid type, expected %s, got %s',
+                            KeyedArrayType::class,
+                            get_debug_type($type)
+                        ));
+                    }
+
+                    $type->templateTypes = [
+                        ...$type->templateTypes,
+                        new TaggedKeyedArrayType(
+                            tag: 'additional',
+                            items: $arg->items,
+                            isList: $arg->isList,
+                        ),
+                    ];
+                })
+                : null,
             default => null,
         };
     }

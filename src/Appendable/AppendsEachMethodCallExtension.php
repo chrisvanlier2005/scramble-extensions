@@ -4,10 +4,14 @@ namespace Lier\ScrambleExtensions\Appendable;
 
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
+use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Http\Resources\Json\JsonResource;
+use InvalidArgumentException;
+use Lier\ScrambleExtensions\Support\Types\TaggedFunctionType;
+use UnexpectedValueException;
 
 class AppendsEachMethodCallExtension implements MethodReturnTypeExtension
 {
@@ -35,7 +39,30 @@ class AppendsEachMethodCallExtension implements MethodReturnTypeExtension
     public function getMethodReturnType(MethodCallEvent $event): ?Type
     {
         return match ($event->name) {
-            'appendEach', 'preserveQuery' => $event->getInstance(),
+            'appendEach' => $event->getInstance() instanceof Generic
+                ? tap($event->getInstance(), function (Generic $type) use ($event) {
+                    $arg = $event->getArg('callback', 0);
+
+                    if (!$arg instanceof FunctionType) {
+                        throw new InvalidArgumentException(sprintf(
+                            'Invalid type, expected %s, got %s',
+                            FunctionType::class,
+                            get_debug_type($type)
+                        ));
+                    }
+
+                    $type->templateTypes = [
+                        ...$type->templateTypes,
+                        new TaggedFunctionType(
+                            tag: 'appendEach',
+                            name: $arg->name,
+                            arguments: $arg->arguments,
+                            returnType: $arg->returnType,
+                        )
+                    ];
+                })
+                : null,
+            'preserveQuery' => $event->getInstance(),
             default => null,
         };
     }
