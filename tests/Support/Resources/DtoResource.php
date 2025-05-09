@@ -16,6 +16,7 @@ class DtoResource extends JsonResource
             'name' => $this->resource->name,
             'age' => $this->resource->age,
             'role' => $this->resource->role,
+            'items' => $this->resource->items,
         ];
     }
 }

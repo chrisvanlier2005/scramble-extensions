@@ -4,19 +4,23 @@ namespace Lier\ScrambleExtensions\Properties;
 
 use Dedoc\Scramble\Infer\Definition\ClassDefinition;
 use Dedoc\Scramble\Infer\Extensions\Event\PropertyFetchEvent;
+use Dedoc\Scramble\Infer\Extensions\PropertyTypeExtension;
 use Dedoc\Scramble\Infer\Scope\Scope;
 use Dedoc\Scramble\Infer\Services\FileNameResolver;
-use Dedoc\Scramble\Support\InferExtensions\JsonResourceExtension;
 use Dedoc\Scramble\Support\Type\ObjectType;
 use Dedoc\Scramble\Support\Type\Type;
 use Dedoc\Scramble\Support\Type\UnknownType;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
 use ReflectionClass;
-use Tests\Support\Resources\JsonResource;
 
-class JsonResourceWithPlainObject
+class JsonResourceWithPlainObject implements PropertyTypeExtension
 {
+    public function shouldHandle(ObjectType $type): bool
+    {
+        return $type->isInstanceOf(JsonResource::class);
+    }
+
     /**
      * Copied from JsonResourceHelper.
      *

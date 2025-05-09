@@ -16,6 +16,6 @@ class DtoResourceController
      */
     public function __invoke(): DtoResource
     {
-        return new DtoResource(new SimpleDto('test', 19, Role::Admin));
+        return new DtoResource(new SimpleDto('test', 19, Role::Admin, []));
     }
 }

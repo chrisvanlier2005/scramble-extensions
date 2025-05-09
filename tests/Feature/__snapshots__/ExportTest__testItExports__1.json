@@ -533,16 +533,44 @@
                         "type": "string"
                     },
                     "age": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "role": {
-                        "type": "string"
+                        "$ref": "#/components/schemas/Role"
+                    },
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "object": {
+                                "type": "object",
+                                "properties": {
+                                    "first": {
+                                        "type": "string"
+                                    },
+                                    "second": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "first",
+                                    "second"
+                                ]
+                            },
+                            "string": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "object",
+                            "string"
+                        ]
                     }
                 },
                 "required": [
                     "name",
                     "age",
-                    "role"
+                    "role",
+                    "items"
                 ],
                 "title": "DtoResource"
             },
