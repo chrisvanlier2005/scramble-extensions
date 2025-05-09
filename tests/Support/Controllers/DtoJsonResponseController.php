@@ -5,7 +5,7 @@ namespace Tests\Support\Controllers;
 use Illuminate\Http\JsonResponse;
 use Tests\Support\Value\SimpleDto;
 
-class DtoResponseController
+class DtoJsonResponseController
 {
     /**
      * Dto response

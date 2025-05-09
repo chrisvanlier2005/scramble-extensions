@@ -1,6 +1,6 @@
 <?php
 
-namespace Lier\ScrambleExtensions\Properties;
+namespace Lier\ScrambleExtensions\Properties\PhpDoc;
 
 use Dedoc\Scramble\Support\Type\Type;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocTagNode;

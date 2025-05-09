@@ -47,6 +47,7 @@
     },
     "require-dev": {
         "orchestra/testbench": "^10.2.2",
-        "phpunit/phpunit": "^12.1"
+        "phpunit/phpunit": "^12.1",
+        "spatie/phpunit-snapshot-assertions": "^5.2"
     }
 }

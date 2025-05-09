@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Route;
 use Lier\ScrambleExtensions\Commands\DocsExport;
 use Lier\ScrambleExtensions\ExtensionRegistry;
 use RuntimeException;
-use Tests\Support\Controllers\DtoResponseController;
+use Spatie\Snapshots\MatchesSnapshots;
+use Tests\Support\Controllers\DtoJsonResponseController;
+use Tests\Support\Controllers\DtoResourceController;
 use Tests\Support\Controllers\PaginatedProductController;
 use Tests\Support\Controllers\ProductControllerWithComplexFilters;
 use Tests\Support\Controllers\UserControllerWithAppends;
@@ -17,6 +19,8 @@ use Tests\TestCase;
 
 final class ExportTest extends TestCase
 {
+    use MatchesSnapshots;
+
     private string $temporaryFile;
 
     protected function setUp(): void
@@ -42,13 +46,7 @@ final class ExportTest extends TestCase
             '--path' => $this->temporaryFile,
         ]);
 
-        $this->assertFileExists($this->temporaryFile);
-
-        // file_put_contents(__DIR__ . '/../data/expected.json', file_get_contents($this->temporaryFile));
-        $this->assertFileEquals(
-            __DIR__ . '/../data/expected.json',
-            $this->temporaryFile,
-        );
+        $this->assertMatchesJsonSnapshot(file_get_contents($this->temporaryFile));;
     }
 
     private function registerRoutes(): void
@@ -58,7 +56,8 @@ final class ExportTest extends TestCase
             Route::get('list-products', PaginatedProductController::class)->name('list-products');
             Route::get('products-with-filters', ProductControllerWithComplexFilters::class)
                 ->name('products-with-filters');
-            Route::get('dto-response', DtoResponseController::class)->name('dto-response');
+            Route::get('dto-json-response', DtoJsonResponseController::class)->name('dto-json-response');
+            Route::get('dto-resource-response', DtoResourceController::class)->name('dto-resource-response');
         });
     }
 }

@@ -2,17 +2,16 @@
 
 namespace Lier\ScrambleExtensions;
 
+use Dedoc\Scramble\Support\InferExtensions\JsonResourceExtension;
 use Lier\ScrambleExtensions\Appendable\AppendableAnonymousJsonResourceCollectionSchema;
 use Lier\ScrambleExtensions\Appendable\AppendableJsonResourceToSchema;
 use Lier\ScrambleExtensions\Appendable\AppendableResourceCollectionToSchema;
 use Lier\ScrambleExtensions\Appendable\AppendMethodCallExtension;
 use Lier\ScrambleExtensions\Appendable\AppendsEachMethodCallExtension;
-use Lier\ScrambleExtensions\Appendable\JsonResourceExtension;
-use Lier\ScrambleExtensions\Appendable\InferAppendableAnonymousResourceCollection;
-use Lier\ScrambleExtensions\Appendable\InferAppendJsonResource;
 use Lier\ScrambleExtensions\Pagination\LengthAwarePaginatorSchemaExtension;
 use Lier\ScrambleExtensions\Pagination\PaginatedOperationExtension;
-use Lier\ScrambleExtensions\Properties\PropertyTypesFromPhpDocExtension;
+use Lier\ScrambleExtensions\Properties\JsonResourceWithPlainObject;
+use Lier\ScrambleExtensions\Properties\PhpDoc\PropertyTypesFromPhpDocExtension;
 use Lier\ScrambleExtensions\Resources\MergeWhenCallExtension;
 use Lier\ScrambleExtensions\Schema\Brick\BigDecimalToSchemaExtension;
 use Lier\ScrambleExtensions\Schema\Brick\CurrencyToSchemaExtension;
@@ -48,7 +47,6 @@ class ExtensionRegistry
      * @var list<class-string>
      */
     public const array APPENDABLE_RESOURCES = [
-        JsonResourceExtension::class,
         AppendableAnonymousJsonResourceCollectionSchema::class,
         AppendableJsonResourceToSchema::class,
         AppendMethodCallExtension::class,
@@ -72,7 +70,8 @@ class ExtensionRegistry
     /**
      * @var list<class-string>
      */
-    public const array PHPDOC_PROPERTIES = [
+    public const array PROPERTIES = [
+        JsonResourceWithPlainObject::class,
         PropertyTypesFromPhpDocExtension::class,
     ];
 }

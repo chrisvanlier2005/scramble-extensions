@@ -16,7 +16,7 @@ class ScrambleTestProvider extends ServiceProvider
     {
         Scramble::$extensions = [
             ...ExtensionRegistry::PAGINATION,
-            ...ExtensionRegistry::PHPDOC_PROPERTIES,
+            ...ExtensionRegistry::PROPERTIES,
             ...ExtensionRegistry::APPENDABLE_RESOURCES,
             ...ExtensionRegistry::VALIDATION_RULES,
             ...ExtensionRegistry::TYPE_TO_SCHEMA,

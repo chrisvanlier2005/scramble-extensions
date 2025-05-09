@@ -54,12 +54,12 @@ class AppendableJsonResourceToSchema extends JsonResourceTypeToSchema
         $schema = $this->openApiTransformer->transform($newType);
 
         if ($appendCallType === null) {
-            return $schema;
+            return $schema->setDescription(self::class);
         }
 
         $transformed = $this->openApiTransformer->transform($appendCallType->toKeyedArrayType());
 
-        return new AllOf()->setItems([
+        return new AllOf()->setDescription(self::class)->setItems([
             $schema,
             $transformed,
         ]);
@@ -92,7 +92,8 @@ class AppendableJsonResourceToSchema extends JsonResourceTypeToSchema
 
         $resourceType = new Generator\Types\ObjectType()
             ->addProperty('data', $resourceType)
-            ->setRequired(['data']);
+            ->setRequired(['data'])
+            ->setDescription(self::class);
 
         return Response::make(200)->setContent(
             'application/json',

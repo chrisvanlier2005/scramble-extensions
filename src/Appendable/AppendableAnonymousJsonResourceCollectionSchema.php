@@ -38,7 +38,7 @@ class AppendableAnonymousJsonResourceCollectionSchema extends AnonymousResourceC
      * Convert the given type to an OpenAPI schema.
      *
      * @param \Dedoc\Scramble\Support\Type\Generic $type
-     * @return \Dedoc\Scramble\Support\Generator\Types\ArrayType
+     * @return \Dedoc\Scramble\Support\Generator\Types\ArrayType|null
      */
     public function toSchema(Type $type): ?Generator\Types\ArrayType
     {
@@ -55,7 +55,7 @@ class AppendableAnonymousJsonResourceCollectionSchema extends AnonymousResourceC
         $resourceSchema = $this->openApiTransformer->transform($collectingResourceType);
 
         if ($appendEachCallParameters->isEmpty()) {
-            return new Generator\Types\ArrayType()->setItems($resourceSchema);
+            return new Generator\Types\ArrayType()->setDescription(self::class)->setItems($resourceSchema);
         }
 
         $transformed = $this->openApiTransformer->transform(
@@ -64,9 +64,11 @@ class AppendableAnonymousJsonResourceCollectionSchema extends AnonymousResourceC
             new KeyedArrayType($appendEachCallParameters->toArray()),
         );
 
-        return new Generator\Types\ArrayType()->setItems(
-            new AllOf()->setItems([$resourceSchema, $transformed]),
-        );
+        return new Generator\Types\ArrayType()
+            ->setDescription(self::class)
+            ->setItems(
+                new AllOf()->setItems([$resourceSchema, $transformed]),
+            );
     }
 
     /**
@@ -99,11 +101,12 @@ class AppendableAnonymousJsonResourceCollectionSchema extends AnonymousResourceC
 
         $openApiType = OpenApiObjectHelper::createObjectTypeFromArray([
             'data' => new Generator\Types\ArrayType()->setItems($openApiType),
-        ], ['data']);
+        ], ['data'])->setDescription(self::class);
 
         $additional = $this->collectAdditionalType($type);
 
         if ($additional instanceof TaggedKeyedArrayType) {
+
             $additional = $additional->toKeyedArrayType();
             $additional->items = $this->flattenMergeValues($additional->items);
 
