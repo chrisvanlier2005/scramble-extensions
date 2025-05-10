@@ -61,11 +61,7 @@ class JsonResourceWithObject implements PropertyTypeExtension
             return $cachedType;
         }
 
-        $modelClass = $this->getClassName(
-            $jsonClass->name,
-            new ReflectionClass($jsonClass->name),
-            $scope->nameResolver,
-        );
+        $modelClass = $this->getClassName(new ReflectionClass($jsonClass->name), $scope->nameResolver);
 
         $type = new UnknownType();
 
@@ -78,7 +74,7 @@ class JsonResourceWithObject implements PropertyTypeExtension
         return $type;
     }
 
-    private function getClassName(string $jsonResourceClassName, ReflectionClass $reflectionClass, FileNameResolver $getFqName): ?string
+    private function getClassName(ReflectionClass $reflectionClass, FileNameResolver $getFqName): ?string
     {
         $phpDoc = $reflectionClass->getDocComment();
 
