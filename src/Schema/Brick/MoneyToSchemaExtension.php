@@ -34,8 +34,6 @@ class MoneyToSchemaExtension extends TypeToSchemaExtension
      */
     public function toSchema(Type $type): Generator\Types\ObjectType
     {
-        Assert::isInstanceOf($type, ObjectType::class);
-
         $amount = new StringType();
         $amount->description = 'The amount formatted as a string. `<= 999.999.999.999,0000`';
         $amount->examples(['100000.2321']);

@@ -10,7 +10,7 @@ use Lier\ScrambleExtensions\Appendable\AppendMethodCallExtension;
 use Lier\ScrambleExtensions\Appendable\AppendsEachMethodCallExtension;
 use Lier\ScrambleExtensions\Pagination\LengthAwarePaginatorSchemaExtension;
 use Lier\ScrambleExtensions\Pagination\PaginatedOperationExtension;
-use Lier\ScrambleExtensions\Properties\JsonResourceWithPlainObject;
+use Lier\ScrambleExtensions\Properties\JsonResourceWithObject;
 use Lier\ScrambleExtensions\Properties\PhpDoc\PropertyTypesFromPhpDocExtension;
 use Lier\ScrambleExtensions\Resources\MergeWhenCallExtension;
 use Lier\ScrambleExtensions\Schema\Brick\BigDecimalToSchemaExtension;
@@ -71,7 +71,7 @@ class ExtensionRegistry
      * @var list<class-string>
      */
     public const array PROPERTIES = [
-        JsonResourceWithPlainObject::class,
+        JsonResourceWithObject::class,
         PropertyTypesFromPhpDocExtension::class,
     ];
 }

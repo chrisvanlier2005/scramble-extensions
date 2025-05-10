@@ -33,8 +33,6 @@ class CurrencyToSchemaExtension extends TypeToSchemaExtension
      */
     public function toSchema(Type $type): StringType
     {
-        Assert::isInstanceOf($type, ObjectType::class);
-
         return new StringType()
             ->setDescription('A 3-letter uppercase ISO 4217 currency code.')
             ->example('USD')

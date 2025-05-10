@@ -14,13 +14,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
 use ReflectionClass;
 
-class JsonResourceWithPlainObject implements PropertyTypeExtension
+class JsonResourceWithObject implements PropertyTypeExtension
 {
-    public function shouldHandle(ObjectType $type): bool
-    {
-        return $type->isInstanceOf(JsonResource::class);
-    }
-
     /**
      * Copied from JsonResourceHelper.
      *
@@ -29,6 +24,19 @@ class JsonResourceWithPlainObject implements PropertyTypeExtension
     public static $cache = [];
 
     /**
+     * Determine whether this extension should handle the given type.
+     *
+     * @param \Dedoc\Scramble\Support\Type\ObjectType $type
+     * @return bool
+     */
+    public function shouldHandle(ObjectType $type): bool
+    {
+        return $type->isInstanceOf(JsonResource::class);
+    }
+
+    /**
+     * Get the property type for the given property fetch event.
+     *
      * @throws \ReflectionException
      */
     public function getPropertyType(PropertyFetchEvent $event): ?Type
@@ -40,7 +48,7 @@ class JsonResourceWithPlainObject implements PropertyTypeExtension
     }
 
     /**
-     * Mostly copied form JsonResourceHelper.
+     * Mostly copied from JsonResourceHelper.
      *
      * @param \Dedoc\Scramble\Infer\Definition\ClassDefinition $jsonClass
      * @param \Dedoc\Scramble\Infer\Scope\Scope $scope
@@ -53,7 +61,7 @@ class JsonResourceWithPlainObject implements PropertyTypeExtension
             return $cachedType;
         }
 
-        $modelClass = $this->getModelName(
+        $modelClass = $this->getClassName(
             $jsonClass->name,
             new ReflectionClass($jsonClass->name),
             $scope->nameResolver,
@@ -70,7 +78,7 @@ class JsonResourceWithPlainObject implements PropertyTypeExtension
         return $type;
     }
 
-    private function getModelName(string $jsonResourceClassName, ReflectionClass $reflectionClass, FileNameResolver $getFqName): ?string
+    private function getClassName(string $jsonResourceClassName, ReflectionClass $reflectionClass, FileNameResolver $getFqName): ?string
     {
         $phpDoc = $reflectionClass->getDocComment();
 
@@ -93,14 +101,6 @@ class JsonResourceWithPlainObject implements PropertyTypeExtension
             }
         }
 
-        $modelName = (string) Str::of(Str::of($jsonResourceClassName)->explode('\\')->last())->replace('Resource', '')->singular();
-
-        $modelClass = 'App\\Models\\' . $modelName;
-
-        if (!class_exists($modelClass)) {
-            return null;
-        }
-
-        return $modelClass;
+        return null; // TODO: determine whether we want to support implicit resource models.
     }
 }

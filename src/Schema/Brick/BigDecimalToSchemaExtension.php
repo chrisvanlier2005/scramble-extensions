@@ -33,8 +33,6 @@ class BigDecimalToSchemaExtension extends TypeToSchemaExtension
      */
     public function toSchema(Type $type): StringType
     {
-        Assert::isInstanceOf($type, ObjectType::class);
-
         return new StringType()
             ->setDescription('The amount formatted as a string. `<= 999.999.999.999,00`')
             ->example('12456.78');

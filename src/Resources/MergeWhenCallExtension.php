@@ -4,7 +4,6 @@ namespace Lier\ScrambleExtensions\Resources;
 
 use Dedoc\Scramble\Infer\Extensions\Event\MethodCallEvent;
 use Dedoc\Scramble\Infer\Extensions\MethodReturnTypeExtension;
-use Dedoc\Scramble\Support\InferExtensions\JsonResourceExtension;
 use Dedoc\Scramble\Support\Type\BooleanType;
 use Dedoc\Scramble\Support\Type\FunctionType;
 use Dedoc\Scramble\Support\Type\Generic;
@@ -13,7 +12,7 @@ use Dedoc\Scramble\Support\Type\SelfType;
 use Dedoc\Scramble\Support\Type\Type;
 use Illuminate\Http\Resources\MergeValue;
 
-class MergeWhenCallExtension extends JsonResourceExtension implements MethodReturnTypeExtension
+class MergeWhenCallExtension implements MethodReturnTypeExtension
 {
     /**
      * Determine whether this extension should handle the given type.
