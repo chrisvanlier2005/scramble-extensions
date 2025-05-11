@@ -20,6 +20,11 @@
             "email": "93382176+chrisvanlier2005@users.noreply.github.com"
         }
     ],
+    "scripts": {
+        "test": [
+            "vendor/bin/phpunit"
+        ]
+    },
     "require": {
         "dedoc/scramble": "dev-main",
         "brick/money": ">=0.10.0",

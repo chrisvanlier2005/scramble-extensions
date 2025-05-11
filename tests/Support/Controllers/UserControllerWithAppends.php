@@ -27,6 +27,7 @@ class UserControllerWithAppends
                     ]),
             ])
             ->additional([
+                /** @var array<string> */
                 'names' => $user->pluck('name'),
             ]);
     }

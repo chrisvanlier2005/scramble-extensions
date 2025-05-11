@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read int $id
  * @property string $name
  * @property \Tests\Support\Value\Role $role
+ * @property \Brick\Money\Money $money
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Tests\Support\Models\Post> $posts
  * @property-read bool $posts_exists
  */

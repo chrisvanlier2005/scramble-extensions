@@ -270,7 +270,10 @@
                                             }
                                         },
                                         "names": {
-                                            "type": "string"
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
                                         }
                                     },
                                     "required": [
@@ -791,11 +794,15 @@
                     },
                     "role": {
                         "$ref": "#/components/schemas/Role"
+                    },
+                    "money": {
+                        "$ref": "#/components/schemas/Money"
                     }
                 },
                 "required": [
                     "name",
-                    "role"
+                    "role",
+                    "money"
                 ],
                 "title": "UserResource"
             }

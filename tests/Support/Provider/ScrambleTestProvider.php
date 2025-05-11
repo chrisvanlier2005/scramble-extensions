@@ -18,7 +18,6 @@ class ScrambleTestProvider extends ServiceProvider
             ...ExtensionRegistry::PAGINATION,
             ...ExtensionRegistry::PROPERTIES,
             ...ExtensionRegistry::APPENDABLE_RESOURCES,
-            ...ExtensionRegistry::VALIDATION_RULES,
             ...ExtensionRegistry::TYPE_TO_SCHEMA,
         ];
 
