@@ -1,0 +1,187 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Laravel",
+        "version": "0.0.1"
+    },
+    "servers": [
+        {
+            "url": "http://localhost/api"
+        }
+    ],
+    "security": [
+        {
+            "laravel-session": []
+        },
+        {
+            "csrf_token": []
+        }
+    ],
+    "paths": {
+        "/Coalesced_Append_Controller": {
+            "get": {
+                "operationId": "Coalesced_Append_Controller",
+                "tags": [
+                    "Coalesced_Append_"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Lier\\ScrambleExtensions\\Appendable\\AppendableJsonResourceToSchema",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/UserResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "post": {
+                                                            "description": "Lier\\ScrambleExtensions\\Appendable\\AppendableJsonResourceToSchema",
+                                                            "allOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/PostResource"
+                                                                },
+                                                                {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "author": {
+                                                                            "$ref": "#/components/schemas/UserResource"
+                                                                        },
+                                                                        "manager": {
+                                                                            "$ref": "#/components/schemas/UserResource"
+                                                                        }
+                                                                    },
+                                                                    "required": [
+                                                                        "manager"
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "laravel-session": {
+                "type": "apiKey",
+                "description": "The authenticated session cookie",
+                "in": "cookie",
+                "name": "laravel-session"
+            },
+            "csrf_token": {
+                "type": "apiKey",
+                "description": "A header containing the current CSRF token",
+                "in": "header",
+                "name": "X-CSRF-TOKEN"
+            }
+        },
+        "schemas": {
+            "Money": {
+                "type": "object",
+                "properties": {
+                    "amount": {
+                        "type": "string",
+                        "description": "The amount formatted as a string. `<= 999.999.999.999,0000`",
+                        "examples": [
+                            "100000.2321"
+                        ]
+                    },
+                    "currency": {
+                        "type": "string",
+                        "description": "A 3-letter uppercase ISO 4217 currency code.",
+                        "examples": [
+                            "USD"
+                        ],
+                        "minLength": 3,
+                        "maxLength": 3
+                    }
+                },
+                "required": [
+                    "amount",
+                    "currency"
+                ],
+                "title": "Money"
+            },
+            "PostResource": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "title",
+                    "content",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "PostResource"
+            },
+            "Role": {
+                "type": "string",
+                "enum": [
+                    "admin",
+                    "user",
+                    "guest"
+                ],
+                "title": "Role"
+            },
+            "UserResource": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/Role"
+                    },
+                    "money": {
+                        "$ref": "#/components/schemas/Money"
+                    }
+                },
+                "required": [
+                    "name",
+                    "role",
+                    "money"
+                ],
+                "title": "UserResource"
+            }
+        }
+    }
+}
