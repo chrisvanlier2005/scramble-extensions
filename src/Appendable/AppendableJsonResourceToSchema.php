@@ -90,6 +90,8 @@ class AppendableJsonResourceToSchema extends JsonResourceTypeToSchema
             $resourceType = new AllOf()->setItems([$resourceType, $transformed]);
         }
 
+        // TODO: Additional?
+
         $resourceType = new Generator\Types\ObjectType()
             ->addProperty('data', $resourceType)
             ->setRequired(['data'])
