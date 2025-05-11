@@ -37,6 +37,13 @@ final class AppendableAnonymousResourceCollectionSchemaTest extends TestCase
 
         $this->assertMatchesJsonSnapshot($documentation);
     }
+
+    public function testItGeneratesWithAdditional(): void
+    {
+        $documentation = $this->generateForInvokable(Additional_Append_Each_Controller::class);
+
+        $this->assertMatchesJsonSnapshot($documentation);
+    }
 }
 
 /**
@@ -91,3 +98,24 @@ class Var_Annotated_Append_Each_Controller
     }
 }
 
+/**
+ * @internal
+ */
+class Additional_Append_Each_Controller {
+    public function __invoke(): AnonymousResourceCollection
+    {
+        $user = User::query()->get();
+
+        return UserResource::collection($user)->appendEach(fn (User $user) => [
+            'posts' => PostResource::collection($user->posts)->appendEach(fn (Post $post) => [
+                'user' => UserResource::make($post->user),
+            ]),
+        ])->additional([
+            'meta' => [
+                'has_posts' => true,
+                /** @var array{likes: array<string>, total_likes: integer} */
+                'data' => [],
+            ],
+        ]);
+    }
+}
