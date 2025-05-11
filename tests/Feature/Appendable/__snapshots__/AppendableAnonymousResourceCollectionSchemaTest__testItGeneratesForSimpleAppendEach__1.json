@@ -1,0 +1,147 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Laravel",
+        "version": "0.0.1"
+    },
+    "servers": [
+        {
+            "url": "http://localhost/api"
+        }
+    ],
+    "security": [
+        {
+            "laravel-session": []
+        },
+        {
+            "csrf_token": []
+        }
+    ],
+    "paths": {
+        "/Simple_Append_Each_Controller": {
+            "get": {
+                "operationId": "Simple_Append_Each_Controller",
+                "tags": [
+                    "Simple_Append_Each_"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Lier\\ScrambleExtensions\\Appendable\\AppendableAnonymousJsonResourceCollectionSchema",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/UserResource"
+                                                    },
+                                                    {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "has_posts": {
+                                                                "type": "string"
+                                                            },
+                                                            "full_name": {
+                                                                "type": "string",
+                                                                "description": "Too complex, requires @var annotation"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "has_posts",
+                                                            "full_name"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "laravel-session": {
+                "type": "apiKey",
+                "description": "The authenticated session cookie",
+                "in": "cookie",
+                "name": "laravel-session"
+            },
+            "csrf_token": {
+                "type": "apiKey",
+                "description": "A header containing the current CSRF token",
+                "in": "header",
+                "name": "X-CSRF-TOKEN"
+            }
+        },
+        "schemas": {
+            "Money": {
+                "type": "object",
+                "properties": {
+                    "amount": {
+                        "type": "string",
+                        "description": "The amount formatted as a string. `<= 999.999.999.999,0000`",
+                        "examples": [
+                            "100000.2321"
+                        ]
+                    },
+                    "currency": {
+                        "type": "string",
+                        "description": "A 3-letter uppercase ISO 4217 currency code.",
+                        "examples": [
+                            "USD"
+                        ],
+                        "minLength": 3,
+                        "maxLength": 3
+                    }
+                },
+                "required": [
+                    "amount",
+                    "currency"
+                ],
+                "title": "Money"
+            },
+            "Role": {
+                "type": "string",
+                "enum": [
+                    "admin",
+                    "user",
+                    "guest"
+                ],
+                "title": "Role"
+            },
+            "UserResource": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/Role"
+                    },
+                    "money": {
+                        "$ref": "#/components/schemas/Money"
+                    }
+                },
+                "required": [
+                    "name",
+                    "role",
+                    "money"
+                ],
+                "title": "UserResource"
+            }
+        }
+    }
+}

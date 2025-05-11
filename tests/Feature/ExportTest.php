@@ -15,11 +15,13 @@ use Tests\Support\Controllers\DtoResourceController;
 use Tests\Support\Controllers\PaginatedProductController;
 use Tests\Support\Controllers\ProductControllerWithComplexFilters;
 use Tests\Support\Controllers\UserControllerWithAppends;
+use Tests\Support\GeneratesApiDocuments;
 use Tests\TestCase;
 
 final class ExportTest extends TestCase
 {
     use MatchesSnapshots;
+    use GeneratesApiDocuments;
 
     private string $temporaryFile;
 
